@@ -1558,3 +1558,409 @@ XML 파일로 작성된 SQL 문을 실행시키는 기능을 제공하는 DAO이
 ```
 
 Query XML 파일의 작성 방법은 [Query XML] 을 참고한다.   
+
+### (1) SqlQueryPage
+
+하나의 Query 파일을 파싱하여 생성된다. Query 파일내의 <statement> 로 정의된 개별 SQL 문장을 SqlQuery 객체로 제공하며 또한 <resultMap> 으로 정의된 ResultMap 객체를 제공한다. 
+
+- public SqlQueryPage(String path)
+- public SqlQueryPage(String path, ClassLoader loader)
+	- 생성자이다. path는 Query 파일의 클래스패스 상의 경로이다. ClassLoader를 지정하면 해당 클래스로더를 사용하여 Query 파일을 로딩하고 지정하지 않으면 기본 클래스로더를 사용하여 로딩한다.
+- public SqlQuery getQuery(String id) throws SqlQueryException
+	- id 로 지정된 하나의 SQL 문장을 SqlQuery 객체로 반환한다. 
+- public ResultMap getResultMap(String id) throws SqlQueryException
+	- id 로 지정된 하나의 ResultMap 객체를 반환한다.
+
+### (2) SqlQuery
+
+하나의 <statement> 를 표현하는 객체이다. SqlQueryPage 로부터 id 값을 통하여 획득할 수 있다. 내부는 <statement> 하위의 Node 구조를 SqlText 객체의 트리 구조로 가지고 있으며 파라메터 값에 따라 트리 탐색을 통하여 Sql 문장이 완성되도록 구현되어 있다.
+
+### (3) JdbcQueryDAO
+
+SqlQueryPage와 SqlQuery 객체를 사용하여 Sql 을 실행할 수 있도록 JdbcDAO를 확장하여 구현한 클래스이다. 다음의 메소드들을 제공한다.
+
+- protected SqlQueryPage getQueryPage(String relativePath)
+	- relatviePath 는 Query XML 파일의 경로이다. 자신의 패키지 경로를 기준으로 한 상대 경로이다.
+- protected int executeUpdate(SqlQuery query, ValueObject paramVO) throws SqlQueryException
+	- Insert, update, delete SQL 문을 실행한다.
+	- query : 실행할 Query 정보를 가지고 있는 SqlQuery 객체이다.
+	- paramVO : 파라메터 값을 가지고 있는 ValueObject 객체이다.
+	- Return : SQL 실행으로 영향을 받은 row 수를 반환한다.
+- protected ValueObject executeUpdateReturnKeys(SqlQuery query, ValueObject paramVO, int numKeyCols) throws SqlQueryException
+	- Insert/Update SQL 을 실행하여 실행결과로 테이블에 입력된 값을 다시 반환받기 위하여 사용된다.
+	- numKeyCols : 리턴해 줄 컬럼수이며 DDL 로 테이블 생성시 만들어진 순서대로 컬럼값이 담겨진다.
+	- Return : 지정된 컬럼에 입력된 실제 값을 ValueObject 객체에 담아서 반환한다.
+- protected ValueObject executeUpdateReturnKeys(SqlQuery query, ValueObject paramVO, int[] columnIndexes) throws SqlQueryException
+	- Insert/Update SQL 을 실행하여 실행결과로 테이블에 입력된 값을 다시 반환받기 위하여 사용된다.
+	- columnIndexes : 반환받을 컬럼의 위치 index 를 지정한다.
+	- 나머지는 위 메소드와 동일한다.
+- protected ValueObject executeUpdateReturnKeys(SqlQuery query, ValueObject paramVO, String[] columnNames) throws SqlQueryException
+	- Insert/Update SQL 을 실행하여 실행결과로 테이블에 입력된 값을 다시 반환받기 위하여 사용된다.
+	- columnNames : 반환받을 컬럼의 명칭을 지정한다.
+	- 나머지는 위 메소드와 동일한다.
+- protected ValueObject executeQuery(SqlQuery query, ValueObject paramVO) throws SqlQueryException
+- protected ValueObject executeQuery(SqlQuery query, ValueObject paramVO, ValueObject pageVO) throws SqlQueryException
+	- Select 조회 SQL 을 수행한다.
+	- query : 실행할 Query 정보를 가지고 있는 SqlQuery 객체이다.
+	- paramVO : 파라메터 값을 가지고 있는 ValueObject 객체이다.
+	-pageVO : 페이지단위의 조회를 실행하고자 할 경우 페이지 정보를 담아서 전달한다.
+	- Return : 조회된 값들을 ValueObject 에 담아서 반환한다. 조회된 결과가 없는 경우에는 비어있는 ValueObject 객체를 반환한다.
+-   protected int[] executeBatch(SqlQuery query, ValueObject paramVO) throws SqlQueryException
+	- 하나의 SQL 문에 여러건의 파라메터로 반복실행하고자 할 경우 사용된다.
+	- Insert, update, delete SQL 을 실행할 수 있다.
+	- paramVO : 파라메터를 값을 가지고 있는 ValueObject 객체이다.
+	- paramVO의 row 수 만큼 Sql 이 실행된다.
+	- Return : 각 실행에 대하여 처리된 row 수가 담겨진 int[] 이 반환된다. 실행된 SQL 중 에러가 발생한 경우에는 관련된 에러코드가 반환된다.
+- protected ValueObject executeCall(SqlQuery query, ValueObject paramVO) throws SqlQueryException
+	- Stored Procedure를 호출한다. 
+	- 단순 IN/OUT/INOUT 파라메터만 있을 경우 사용된다.
+	- IN/INOUT 파라메터 결과 값을 ValueObject에 담아서 반환한다.
+- protected ValueObjectAssembler executeCall(SqlQuery query, ValueObject paramVO, String[] rsNames) throws SqlQueryException
+	- ResultSet을 반환하는 Stored Procedure를 호출한다.
+	- ResultSet 단위로 ValueObject 가 생성되며 모두 ValueObjectAssembler에 담겨서 반환된다.
+	- rsName[0] 는 단순 IN/INOUT 파라메터 리턴값을 담을 ValueObject 명칭이며, rsName[1] 부터 리턴되는 ResultSet 결과를 담은 ValueObject의 명칭이 된다.
+	- Stored Procedure 에서 리턴하는 ResultSet 의 개수가 n 개라면 rsName[] 배열의 크기는 n+1 이 되어야한다.
+
+### (4) DAO 클래스 구현 절차
+
+- 구현할 업무용 DAO 메소드들을 정의하는 Interface 를 작성한다.
+	- DAO 클래스는 JdbcQueryDAO 를 extends 하고 위 interface를 implements 한다.
+	- 사용할 Query XML 파일을 작성한다. (참고 : [Query XML])
+	- DAO 클래스에는 SqlQueryPage를 inject 받기 위한 Setter method를 구현한다.
+- 작성된 DAO interface, class 그리고 Query XML 파일을 하나로 연결하도록 서비스 설정 파일을 작성한다. (참고 : [XmlConfiguredServiceContainer])
+
+**작성 예시 : DAO Interface**
+
+```java
+import java.util.List;
+import s2.adapi.framework.vo.ValueObject;
+
+public interface StoreServiceDAO {
+    /**
+     * 상품 카테고리 목록을 조회한다.
+     * @param langCode 언어코드
+     * @return
+     */
+    public ValueObject getCategoryList(String langCode);
+
+    /**
+     * 카테고리들에 속한 판매 상품 목록을 조회한다.
+     * @param catList
+     * @param pointRate
+     * @param langCode
+     * @return
+     */
+    public ValueObject getProductListOfCategories(List<Integer> catList, double pointRate, String langCode);
+
+    /**
+     * 전달된 카테고리 내의 판매중인 상품 목록을 조회한다. 카테고리 코드가 0 이면 전체 상품 조회이다.
+     * @param categoryCode
+     * @param pointRate 상품가격을 앱의 포인트로 전환하기 위한 비율
+     * @param langCode 언어코드
+     * @return
+     */
+    public ValueObject getProductList(int categoryCode, double pointRate, String langCode);
+
+}
+```
+
+**작성 예시 : DAO class 구현**
+
+import java.util.List;
+import s2.adapi.framework.dao.JdbcQueryDAO;
+import s2.adapi.framework.query.SqlQuery;
+import s2.adapi.framework.query.SqlQueryPage;
+import s2.adapi.framework.vo.ValueObject;
+
+public class StoreServiceDAOImpl extends JdbcQueryDAO implements StoreServiceDAO {
+
+    private SqlQueryPage sqls = null;
+
+    public void setSql(String path) {
+        sqls = getQueryPage(path);
+    }
+
+    @Override
+    public ValueObject getCategoryList(String langCode) {
+
+        ValueObject paramVO = new ValueObject();
+        paramVO.set("lang_cd", langCode);
+
+        SqlQuery sql = sqls.getQuery("getCategoryList");
+
+        return executeQuery(sql, paramVO);
+    }
+
+    @Override
+
+    public ValueObject getProductListOfCategories(List<Integer> catList, double pointRate, String langCode) {
+
+        ValueObject paramVO = new ValueObject();
+        paramVO.set("lang_cd", langCode);
+        paramVO.set("pnt_rate", pointRate);
+
+        if (catList != null && catList.size() > 0) {
+            paramVO.set("cat_cd", catList);
+        }
+
+        SqlQuery sql = sqls.getQuery("getProductListOfCategories");
+
+        return executeQuery(sql, paramVO);
+    }
+
+    @Override
+    public ValueObject getProductList(int categoryCode, double pointRate, String langCode) {
+
+        ValueObject paramVO = new ValueObject();
+        paramVO.set("lang_cd", langCode);
+        paramVO.set("pnt_rate", pointRate);
+        paramVO.set("cat_cd", categoryCode);
+
+        SqlQuery sql = sqls.getQuery("getProductList");
+
+        return executeQuery(sql, paramVO);
+    }
+}
+```
+
+**작성 예시 : 서비스 설정 파일**
+
+```xml
+<services module="store" package="s2.adapi.app.service.store" pre-init="false">
+
+    <service name="StoreServiceDAO"
+             interface="${package}.dao.StoreServiceDAO"
+             class="${package}.dao.StoreServiceDAOImpl"
+             singleton="true">
+        <property name="datasource" ref="jdbc.apidb"/>
+        <property name="sql" value="sqls/store_service_sqls.xml"/>
+    </service>
+
+</services>
+
+## Query XML
+
+Query XML  작성 방법에 대하여 설명한다.
+
+### (1) \<sqls>
+- Query XML 파일의 루트 노드이다. 속성(attribute) 들은 가지고 있지 않으며 하위에 \<statement> 노드와 \<resultMap> 노드를  갖는다.
+- 
+### (2) \<statement>
+- 하나의 SQL 문장을 정의한다. 파일내에서 고유한 id 속성을 가져야한다.
+	- id : 프로그램내에서 SQL 문장을 가져오기 위하여 사용되는 ID 이다. 파일내에서 고유한 값을 가져야한다.
+- SQL  문장
+	- SQL 문장은 동적인 SQL 조립을 위하여 하위에 여러 노드를 가질 수 있다.
+	- DML 및 DDL 문을 작성하며 런타임에 바인딩되는 파라메터는 아래와 같은 형태로 정의한다.
+	- 파라메터 형식 : **#name:mode:type@format#** 또는 **$name$**
+		- #\...# 으로 정의되는 파라메터는 JDBC의 PreparedStatement의 ? 바인딩 방식으로 동작한다. 런타임에 파라메터 값이 달라져도 DB 에서는 같은 SQL 문으로 처리되므로 DB에서 SQL 문장 파싱 작업은 한번만 수행된다.
+		- $\...$ 방식의 파라메터는 SQL 문장 자체를 바꾸는 방식으로 파라메터 값이 바뀌면 DB는 매번 다른 SQL 문장으로 처리하므로 SQL 문장 파싱 작업이 여러번 발생할 수 있다. 성능 이슈가 있으므로 바인딩 방식의 파라메터가 불가능한 경우에만 제한적으로 사용해야한다.
+		- 파라메터 escaping : SQL 문장내에서 \# 이나 $ 문자가 사용되는 경우에는 \## 과 $$ 를  사용한다.
+	- name 
+		- 파라메터 명칭이다. 
+		- 런타임에 Query 실행시 전달되는 ValueObject 에서 값을 가져오기 위하여 사용된다.
+		- name 앞에 % 가 붙으면 실행 중인 서비스의 컨텍스트 정보로부터 name에 해당되는 값을 가져온다. (일반적으로 현재 세션 정보와 바인딩된다.)
+		- name 뒤에 [] 가 붙으면 해당 값은 List 나 배열로 처리되어야 함을 의미한다. 이것은 <iterate> 내에서 사용된다.
+	- mode 
+		- IN, OUT, INOUT 중 하나를 지정한다. 생략하면 디폴트로 IN 으로 지정된다. 
+		- Stored Procedure 호출 시에만 사용되는 기능이다.
+	- type
+		- java.sql.Types 에서 지정된 JDBC Type 에 해당되는 문자를 지정한다. (예 : VARCHAR, NUMERIC) 
+		- 명시적인 타입을 지정하기 위하여 사용된다.
+		- Stored Procedure 호출 시에만 사용되지만 DATE, TIME, TIMESTAMP 의 경우는 일반 SQL 내에서도 사용할 수 있다.
+	- format
+		- type 이 DATE, TIME, TIMESTAMP 의 경우에는 타입변환을 위하여 실제 파라메터의 포멧 문자열을 지정할 수 있다.
+		- format 지정은 [java.text.SimpleDateFormat] 에서 정의하는 포멧 문자열을 사용한다.
+		- DATE type 은 format 이 지정되지 않으면 디폴트로 \'yyyyMMdd\' 가 사용된다.
+		- TIME type은 format 이 지정되지 않으면 디폴트로 \'HHmmss\' 가 사용된다.
+		- TIMESTAMP type은 format 이 지정되지 않으면 디폴트로 \'yyyyMMddHHmmssSSS\' 가 사용된다.
+		- 예를 들어 DB의 컬럼 타입이 Date 이고 여기에 저장될 값이 \'2016-10-27\' 과 같은 형태의 문자열로 전달이된다고 하면 이를 별도 코딩 작업없이 아래와 같이 파라메터로 처리할 수 있다.
+
+**format 사용 예시**
+
+```xml
+<statement id="setComCode"><![CDATA[
+    INSERT INTO comcdeptm (deptcd, todd, fromdd, deptnm, lastupdtdt) 
+           VALUES (#deptcd#, #todd#, #fromdd#, #deptnm#, #updtdt::DATE@yyyy-MM-dd#) ]]>
+</statement> 
+
+- 동적 SQL 작성
+	- 동적 SQL 용 element는 nested 되어 사용이 가능하다.
+	- \<isEmpty property="name"> ... \</isEmpty>
+		- name 에 해당되는 값이 정의되지 않았거나 "" (empty) 인 경우 적용된다.
+	- \<isNotEmpty property="name"> ... \</isNotEmpty>
+		- name 에 해당되는 값이 정의되었고 "" (empty) 가 아닌 경우 적용된다.
+	- \<isEqual property="name" compare="value"> ... \</isEqual>
+		- name 에 해당되는 값이 정의되었고 value 와 동일한 경우 적용된다.
+	- \<isNotEqual property="name" compare="value"> ... \</isNotEqual>
+		- name 에 해당되는 값이 정의되지 않았거나, 정의되었지만 value 와 값이 다른 경우 적용된다.
+	- \<iterate property="name" open="" close="" conjunction=""> ... \</iterate>
+		- name이 배열 또는 List 객체인 경우 그 개수만큼 반복되어 적용된다.
+		- open : 반복 시작 시점에 출력되는 문자이다.
+		- close : 반복 종료 후 출력되는 문자이다.
+		- conjunction : 반복 사이에 출력되는 문자이다.
+		- \<iterate> 하위에 다른 \<iterate> 가 nested 되어 사용될 수 없다.
+		- \<iterate> 내에 작성된 SQL 문장에서는 property 속성의 컬럼 명칭이나 파라메터 명칭 다음에 [] 를 붙일 수 있으며 이때에는 해당 객체를 List 나 배열로 취급하여 값을 순서대로 꺼내어 binding 한다.
+	- 동적 SQL 내에서 property 대신 session 을 사용하면 parameter 가 아니라 세션에서 값을 참조한다.
+	- 예시) <isEmpty session="userid"> ...
+
+**iterate 작성 예시**
+
+```xml
+<statement id="getProductListOfCategories">
+        SELECT b.prd_cd, b.cat_cd, b.tr_type, b.updt_dt, c.corp_nm, c.prd_nm
+          FROM str_prdapps a, str_products b LEFT JOIN str_prdlangs c ON b.prd_cd = c.prd_cd AND c.lang_cd = #lang_cd#
+         WHERE a.app_id = #%appid#
+           AND a.prd_cd = b.prd_cd
+    <isNotEmpty property="cat_cd">
+           AND b.cat_cd IN <iterate property="cat_cd" open="(" close=")" conjunction=",">#cat_cd[]#</iterate>
+    </isNotEmpty>
+           AND b.use_yn = 'Y'
+         ORDER BY b.ord_no, b.prd_price
+</statement>
+
+- Stored Procedure 호출
+	- Stored procedure 용 Query XML 작성시 파라메터는 반드시 #name:mode:type# 과 같은 형태로 정의해야한다.
+	- name : 파라메터 명칭이다. 런타임에 Query 실행시 사용되는 실제 값을 가져오기 위하여 key 이다.
+	- mode : IN, OUT, INOUT 중 하나를 지정한다.
+	- type : java.sql.Types 에서 지정된 JDBC Type 에 해당되는 문자를 지정한다. (예 : VARCHAR, NUMERIC) 
+	- 예를 들어 호출할 stored Procedure 가 아래와 같을 경우 이를 호출하기 위한 Query XML 파일 및 Java 코딩은 다음과 같이 작성할 수 있다. (DB2 의 경우임)
+
+**DB2 Stored procedure sample**
+
+```sql
+-- stored procedure sample
+CREATE PROCEDURE tmp.sptest
+    (IN p_arg1 VARCHAR(10),
+     IN p_arg2 VARCHAR(10), 
+     OUT p_ret1 VARCHAR(10),
+     OUT p_ret2 VARCHAR(10) )
+SPECIFIC sptest 
+DYNAMIC RESULT SETS 1 
+LANGUAGE SQL
+BEGIN
+
+    DECLARE c_test01 CURSOR WITH RETURN FOR
+        SELECT syscd,msgkind,msgno,msg1cnts FROM tmp.test01;
+    SET p_ret1 = p_arg1; SET p_ret2 = p_arg2; OPEN c_test01;
+END 
+@
+```
+
+**Query XML sample**
+
+```xml
+<statement id="spTest"><![CDATA[
+    {call tmp.sptest(#arg1:IN:VARCHAR#, #arg2:IN:VARCHAR#, 
+            #ret1:OUT:VARCHAR#, #ret2:OUT:VARCHAR#)} ]]>
+</statement>
+```
+
+**Java coding**
+
+```java
+public ValueObjectAssembler testSP(ValueObject pVO) throws SqlQueryException { 
+
+    SqlQuery sql = sqlPage.getQuery("spTest");
+    ValueObjectAssembler retVOs = executeCall(sql,pVO,new String[]{"outvo","retvo"});
+
+    return retVOs;
+}
+```
+
+- 위의 예시에 대한 설명
+	- Stored procedure 에서 OUT 파라메터로 정의된 3번째 및 4번째 파라메터 (p_ret1 과 p_ret2) 는 Query XML 에서 #ret1# 과 #ret2# 라는 명칭으로 바인딩되었으므로 ValueObject 에 ret1 과 ret2 라는 컬럼 명으로 결과값이 저장된다.
+	- Stored procedure 에서 Cursor 로 open 된 결과는 또 다른 ValueObject 에 저장된다.
+	- 2개의 ValueObject 객체는 하나의 ValueObjectAssembler 에 각각 outvo 와 retvo 라는 명칭으로 저장되어 반환된다.
+
+- Oracle 의 REF Cursor 사용하기
+	- Oracle 의 REF Cursor 는 ORACLECURSOR 타입의 OUT 파라메터로 지정하여 받아 올 수 있으며, 지정된 파라메터 명칭의 ValueObject 로 생성되어 반환된다.
+	- Java 에서 호출시에는 반드시 ValueObjectAssembler 를 리턴하는 executeCall() 메소드를 사용해야하며, OUT, INOUT 으로 지정된 파라메터값을 받아오기 위한 ValueObject  명칭을 마지막 파라메터로 지정해야한다.
+	- 예를 들어 호출할 stored procedure 가 아래와 같을 때 이를 호출하기 위한 Query XML 파일 및 Java 코딩은 다음과 같이 작성할 수 있다. (Oracle에서 REF Cursor 사용시)
+
+**Oracle REF Cursor 예시**
+
+```sql
+-- Stored procedure sample
+
+CREATE OR REPLACE PROCEDURE sptest( 
+    p_arg1 IN VARCHAR2,
+    p_arg2 IN VARCHAR2,
+    p_ret1 OUT VARCHAR2,
+    p_ret2 OUT VARCHAR2,
+    p_set1 OUT SYS_REFCURSOR ) 
+IS
+
+BEGIN
+
+    p_ret1 := p_arg1; 
+    p_ret2 := p_arg2; 
+
+    OPEN p_set1 FOR
+        SELECT codeflag, bascode, bascdnm FROM COMDBA.COMCCODEM
+         WHERE codeflag='0008';
+
+END;
+```
+
+**Query XML sample**
+
+```xml
+<statement id="spTest"><![CDATA[
+    { call sptest(#arg1:IN:VARCHAR#, #arg2:IN:VARCHAR#, #ret1:OUT:VARCHAR#,
+                       #ret2:OUT:VARCHAR#, #set1:OUT:ORACLECURSOR#)} ]]>
+</statement>
+```
+
+**Java coding**
+
+```java
+public ValueObjectAssembler testSPOra(ValueObject pVO) throws SqlQueryException { 
+
+    SqlQuery sql = sqlPage.getQuery("spTest");
+    ValueObjectAssembler retVOs = executeCall(sql, pVO, new String[]{"a"});
+
+    return retVOs;
+}
+```
+
+### (3) <resultMap>
+- 개별 Query 문에 ColumnReader 매핑을 지정하기 위하여 사용된다. 파일 내에서 고유한 id 속성을 가져야한다.
+	- id : resultMap 을 식별하기 위한 명칭이다.
+	- \<result> : <resultMap> 은 하위에 하나 이상의 <result> element 를 가진다. <result> 는 하나의 ColumnReader 매핑을 정의하며 아래의 속성들(attribute)을 가지고 있다.
+	- column : ColumnReader를 매핑할 컬럼명을 정의한다.
+	-  type : ColumnReader를 매핑할 타입을 정의한다. column과 type은 둘 중 하나만을 정의해야 한다. 
+	- reader : ColumnReader의 클래스 명을 정의한다.
+	- format : format 기능이 있는 ColumnReader인 경우 format 문자열을지정한다.
+	- <statement> 작성 시 SQL 결과 데이터 컬럼을 읽을 때 사용할 <resultMap>의 ID를 resultmap 속성으로 지정한다.
+
+**ResultMap 사용 예시**
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+
+<sqls>
+    <resultMap id="map1">
+        <result column="a"
+reader="s2.adapi.framework.dao.reader.FormattedDateColumnReader"
+format="yyyyMMdd"/>
+        <result column="b"
+reader="s2.adapi.framework.dao.reader.FormattedTimeColumnReader"
+format="HHmmss"/>
+        <result type="DOUBLE"
+reader="s2.adapi.framework.dao.reader.FormattedNumberColumnReader"
+format="###.###"/>
+    </resultMap>
+
+    <statement id="mapTest" resultMap="map1">
+        SELECT a, b, c 
+          FROM com.tbl_test
+    </statement>
+
+</sqls>
+
+- ColumnReader 의 매핑 순서는 다음과 같다.
+	- \<statement> 에 resultmap 이 지정되었을 경우 컬럼 데이터 조회 시 지정한 resultmap에 정의된 ColumnReader 매핑을 사용한다.
+	- \<resultMap> 에 정의된 ColumnReader 매핑에 대하여 column 명으로 지정된 것이 있으면 그것을 우선 적용한다.
+	- \<resultMap> 에 column 명으로 정의된 ColumnReader 매핑이 없으면 type으로 정의된 것을 적용한다.
+	- \<resultMap>에 column 명과 type으로 정의된 ColumnReader 매핑이 모두 없으면 Global ResultMap에 정의된 것을 적용한다. (JdbcDAO 참조)
+	- Global ResultMap에도 정의되지 않았다면 DBMS 별로 디폴트로 정의된 ColumnReader를 사용한다. (JdbcDAO 참조)
