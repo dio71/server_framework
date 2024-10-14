@@ -1243,3 +1243,253 @@ public class ThreadLocalTargetProxy extends AbstractTargetProxy {
     }
 }
 ```
+
+# 5. Data Access Object
+
+Data Access Object(DAO) 는 XML 파일로 정의된 SQL 문장을 통하여 다양한 데이터소스에 대한 접근기능을 제공한다. 아래의 구현클래스들을 제공한다.
+
+- JdbcDAO : Jdbc 를 사용한 SQL 실행기능을 제공한다.
+- JdbcQueryDAO : Framework의 Query  컴포넌트를 사용할 수 있도록 JdbcDAO의 기능을 확장한 클래스이다. 업무별 DAO 클래스는 JdbcQueryDAO를 상속하여 구현하도록 설계되어 있다.
+- SqlQueryDAO : 업무용 DAO 클래스들을 별도로 작성하지 않고 바로 객체를 생성하여 사용할 수 있도록 기능을 제공한다.
+
+## 1) JdbcDAO
+
+Jdbc 를 직접적으로 이용하는 DAO 클래스이다.
+
+-   업무별 DAO를 상속을 통하여 구현한다. 사용되는 SQL 문장은 DAO 클래스내에 문자열로 정의하여 사용한다.
+
+**작성 예시**
+
+```java
+package test.dao;
+
+import java.sql.Connection;
+import java.util.ArrayList;
+import s2.adapi.framework.dao.JdbcDAO;
+import s2.adapi.framework.dao.SqlQueryException;
+import s2.adapi.framework.dao.sql.DataSource;
+import s2.adapi.framework.vo.ValueObject;
+
+public class CreditAppraiseListDAO extends JdbcDAO {
+
+    private static final String GET_CREDIT_LIST_SQL = ""
+            + "SELECT rownum, guarnt_no, jumin_no, cust_no, last_crdt_grd, score"
+            + "  FROM tbl_usercredit"
+            + " WHERE guarnt_div = ?"
+            + "   AND actp_dy = ?"
+            + "   AND guarnt_no > ?"
+            + " ORDER BY guarnt_no";
+
+    public CreditAppraiseListDAO() {
+    }
+
+    public CreditAppraiseListDAO(DataSource dsn) {
+        super(dsn);
+    }
+
+    public ValueObject getCreditAppraisList (ValueObject paramVO) throws SqlQueryException {
+
+        Connection con = null;
+        ValueObject getVO = null;
+
+        try {
+            con = getConnection();
+
+            ArrayList<Object> params = new ArrayList<Object>();
+            params.add(paramVO.get("guarnt_dv"));
+            params.add(paramVO.get("acpt_dy"));
+            params.add(paramVO.get("nk_guarnt_no"));
+
+            getVO = executeQuery(con, GET_CREDIT_LIST_SQL, params);
+        }
+        finally {
+            close(con);
+        }
+
+        return getVO;
+    }
+}
+```
+
+JdbcDAO 가 제공하는 메소드들은 다음과 같다.
+
+### (1) 생성자
+
+- public JdbcDAO() : 디폴트 생성자이다. 디폴트 DataSource 를 사용하여 초기화된다.
+- public JdbcDAO(DataSource datasource) : DataSource 를 지정하여 생성한다.
+
+### (2) Connection 관련
+
+- protected Connection getConnection() throws SqlQueryException : Connection 객체를 반환한다.
+- protected void close(Connection con) throws SqlQueryException : Connection 객체를 close 한다.
+- protected void close(Connection con, PreparedStatement ps, ResultSet rs) throws SqlQueryException : Connection 객체와 PreparedStatement 객체 그리고 ResultSet 객체를 한번에 close 한다.
+
+### (3) INSERT, UPDATE, DELETE 
+
+- protected int executeUpdate(Connection con, String sql, List<Object> param) throws SqlQueryException
+	- Insert, update, delete SQL 문을 실행한다. 
+	- sql : PreparedStatement 생성을 위한 SQL 문장
+	- params : ? 파라메터에 매핑될 값들을 순서대로 담은 List 객체
+	- Return : SQL 실행으로 영향을 받은 row 수를 반환한다. 
+- protected ValueObject executeUpdateReturnKeys(Connection con, String sql, List<Object> param, int numKeyCols[, ResultMap ramp]) throws SqlQueryException
+	- Insert SQL을 실행하며 실행결과로 테이블에 입력된 값을 다시 반환받기 위하여 사용된다.
+	- numKeyCols : 리턴해 줄 컬럼수이며 DDL 로 테이블 생성시 만들어진 순서대로 담겨진다.
+	- ResultMap 은 DB에서 컬럼의 값을 읽어올때 어떤 ColumnReader 를 사용하여 값을 읽어 올지 지정하는 용도로 사용된다. 컬럼의 타입별로 [ColumnReader] 를 지정하거나 컬럼의 명칭에 따라서 ColumnReader 를 지정할 수 있다. ResultMap 을 지정하지 않는 경우에는 프레임워크 내부에 설정된 디폴트 ColumnReader 들이 사용된다. 디폴트 ColumnReader 들은 사용되는 DB의 종류에 따라서 다르게 설정되어 있다.
+	- Return : 지정된 컬럼에 입력된 실제 값을 ValueObject 객체에 담아서 반환한다.
+
+- protected ValueObject executeUpdateReturnKeys(Connection con, String sql, List<Object> param, int[] columnIndexes[, ResultMap ramp]) throws SqlQueryException
+	- Insert SQL을 실행하며 실행결과로 테이블에 입력된 값을 다시 반환받기 위하여 사용된다.
+	- columnIndexes : 반환받을 컬럼의 위치 index 를 지정한다.
+	- 나머지는 위 메소드와 동일한다.
+
+- protected ValueObject executeUpdateReturnKeys(Connection con, String sql, List<Object> param, String[] columnNames[, ResultMap ramp]) throws SqlQueryException
+	- Insert SQL을 실행하며 실행결과로 테이블에 입력된 값을 다시 반환받기 위하여 사용된다.
+	- columnNames : 반환받을 컬럼의 명칭을 지정한다.
+	- 나머지는 위 메소드와 동일하다.
+
+### (4) SELECT
+
+- protected ValueObject executeQuery(Connection con, String sql, List<Object> param[, ResultMap rmap]) throws SqlQueryException
+- protected ValueObject executeQuery(Connection con, String sql, List<Object> param, ValueObject pageVO[, ResultMap rmap]) throws SqlQueryException
+	- Select 조회 SQL 을 수행한다.
+	- sql : PreparedStatement 생성을 위한 SQL 문장
+	-params : ? 파라메터에 매핑될 값들을 순서대로 담은 List 객체
+	- pageVO : 페이지단위의 조회를 실행하고자 할 경우 페이지 정보를 담아서 전달한다.
+	- ResultMap 은 DB에서 컬럼의 값을 읽어올때 어떤 ColumnReader 를 사용하여 값을 읽어 올지 지정하는 용도로 사용된다.
+	- Return : 조회된 값들을 ValueObject 에 담아서 반환한다. 조회된 결과가 없는 경우에는 비어있는 ValueObject 객체를 반환한다.
+
+### (5) Batch SQL
+
+- protected int[] executeBatch(Connection con, String sql, List<?>[] params)
+	- 하나의 SQL 문에 여러건의 파라메터로 반복실행하고자 할 경우 사용된다.
+	- Insert, update, delete SQL 을 실행할 수 있다.
+	- params : SQL 문에 순서대로 매핑될 파라메터 리스트가 여러건 필요하므로 이를 배열에 담아서 전달한다.
+	- Return : 각 실행에 대하여 처리된 row 수가 담겨진 int[] 이 반환된다. 실행된 SQL 중 에러가 발생한 경우에는 관련된 에러코드가 반환된다.
+
+## ColumnReader
+
+데이터베이스 테이블의 값을 조회할 때 해당 컬럼의 JDBC Type에 따라서 적합한 ColumnReader가 사용된다. 
+
+**ColumnReader.java 인터페이스**
+
+```java
+package s2.adapi.framework.dao.reader;
+
+import java.sql.CallableStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
+/**
+ * ResultSet과 CallableStatement에서 결과 data를 fetch해오는 인터페이스이다.
+ */
+public interface ColumnReader {
+
+    /**
+     * ResultSet 에서 해당 columnIndex에 해당하는 row의 값을 fetch하여 return하도록 하위 Class에서 구현해야 한다.
+     * @param columnIndex fetch할 ResultSet의 해당 index
+     * @param rs fetch할 대상이 되는 ResultSet
+     * @return ResultSet에서 fetch한 value
+     * @throws SQLException
+     */
+
+    public Object read(int columnIndex, ResultSet rs) throws SQLException;
+
+    /**
+     * 실행된 CallableStatement에서 해당 columnIndex에 해당되는 값을 fetach하여 return 하도록 하위 Class에서 구현해야 한다.
+     * @param columnIndex
+     * @param cstmt
+     * @return
+     * @throws SQLException
+     */
+    public Object read(int columnIndex, CallableStatement cstmt) throws SQLException;
+
+}
+
+### (1) JdbcDAO가 제공하는 ColumnReader 들은 아래와 같다.
+
+- StringColumnReader : 컬럼값을 String으로 읽어와서 java.lang.String 객체로 반환한다.
+- DateColumnReader : 컬럼값을 Date으로 읽어와서 java.sql.Date 객체로 반환한다.
+- TimeColumnReader : 컬럼값을 Time으로 읽어와서 java.sql.Time 객체로 반환한다.
+- TimeStampColumnReader : 컬럼값을 Timestamp로 읽어와서 java.sql.Timestamp 객체로 반환한다.
+- ByteColumnReader : 컬럼값을 Byte로 읽어와서 java.lang.Byte 객체로 반환한다.
+- BooleanColumnReader : 컬럼값을 Boolean 으로 읽어와서 java.lang.Boolean 객체로 반환한다.
+- ShortColumnReader : 컬럼값을 BigDecimal로 읽어와서 java.lang.Short 객체로 반환한다.
+- IntColumnReader : 컬럼값을 BigDecimal로 읽어와서 java.lang.Integer 객체로 반환한다.
+- LongColumnReader : 컬럼값을 BigDecimal으로 읽어와서 java.lang.Long 객체로 반환한다.
+- RealColumnReader : 컬럼값을 BigDecimal로 읽어와서 java.lang.Float 객체로 반환한다.
+- DoubleColumReader : 컬럼값을 BigDecimal로 읽어와서 java.lang.Double 객체로 반환한다.
+- ScalarColumnReader : 컬럼값을 BigDecimal로 읽어와서 소수점 자리값이 없으면 Integer 객체로, 소수점 자리값이 있으면 Double 객체로 반환한다.
+- BigDecimalColumnReader : 컬럼값을 BigDecimal 로 읽어와서 java.math.BigDecimal 객체로 반환한다.
+- BinaryStreamColumnReader : 컬럼값을 BinaryStream 으로 읽어와서 byte[]  객체로 반환한다.
+- BLOBColumnReader : 컬럼값을 Blob 으로 읽어와서 byte[]  객체로 반환한다.
+- CharStreamColumnReader : 컬럼값을 CharacterStream으로 읽어와서 char[] 객체로 반환한다.
+- CLOBColumnReader : 컬럼값을 CharacterStream으로 읽어와서 java.sql.Clob 객체로 반환한다.
+- CLOBStringColumnReader : 컬럼값을 Clob 으로 읽어와서 java.lang.String 객체로 반환한다.
+- EpochTimeStampColumnReader : 컬럼값을 TimeStamp 로 읽어와서 GMT 1970년 1월 1일 자정 기준으로 해당 시간까지의 milli-second 로 반환한다. 
+- FormattedDateColumnReader : 컬럼값을 Date로 읽어와서 format을 적용하여 java.lang.String 객체로 반환한다.
+- FormattedTimeColumnReader : 컬럼값을 Time으로 읽어와서 format을 적용하여 java.lang.String 객체로 반환한다.
+- FormattedTimeStampColumnReader : 컬럼값을 Timestamp로 읽어와서 format을 적용하여 java.lang.String 객체로 반환한다.
+- FormattedNumberColumnReader : 컬럼값을 Double로 읽어와서 format을 적용하여 java.lang.String 객체로 반환한다.
+- SimpleIntegerColumnReader : 컬럼값을 Int 로 읽어와서 Int 로 반환한다.
+- ISOStringColumnReader : DB에 저장된 한글의 charset 이 IOS8859_1 인 경우 이를 euc-kr 한글로 변환하기 위하여 사용한다.
+- ArrayColumnReader : 컬럼값을 java.sql.Array 로 읽어와서 반환한다. 
+- OracleCursorReader : CallableStatement의 OUT 파라메터를 ResultSet으로 읽어와서 다시 컬럼들을 해당 타입에 따라 읽어서 ValueObject 객체에 담아서 리턴한다.
+- OracleXmlColumnReader : 컬럼값을 oracle.xdb.XMLType 으로 읽어와서 String으로 반환한다.
+- DB2XmlColumnReader : 컬럼값을 com.ibm.db2.jcc.DB2Xml 으로 읽어와서 String으로 반환한다.
+- ObjectColumnReader : 컬럼값을 Object로 읽어와서 java.lang.Object 객체로 반환한다.
+
+### (2) 디폴트 ColumnReader (PostgreSQL, MySql, SqlServer, Sybase
+포함)![](vertopal_b378c48198ea424d858d505c4b800e25/media/image1.png)
+
+### (3) Oracle 기본
+ColumnReader![](vertopal_b378c48198ea424d858d505c4b800e25/media/image2.png)
+
+### (4) DB2 기본
+ColumnReader![](vertopal_b378c48198ea424d858d505c4b800e25/media/image3.png)
+
+### (5) Global ColumnReader 설정하기
+
+ 프레임워크 내에서 DB별 디폴트 지정된 ColumnReader 를 사용하도록 되어있지만 특정 타입에 대해서는 다른 ColumnReader 를 사용하고자 할 경우에는 GlobalResultMap 파일을 사용하여 설정할 수 있다.
+
+**작성 예시**
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<sqls>
+
+    <resultMap id="db2">
+        <result type="SMALLINT" reader="s2.adapi.framework.dao.reader.IntColumnReader"/>
+        <result type="DATE" reader="s2.adapi.framework.dao.reader.FormattedDateColumnReader" format="yyyyMMdd"/>
+        <result type="TIME" reader="s2.adapi.framework.dao.reader.FormattedTimeColumnReader" format="HHmmss"/>
+        <result type="TIMESTAMP" reader="s2.adapi.framework.dao.reader.FormattedTimeStampColumnReader" format="yyyyMMddHHmmssSSS"/>
+    </resultMap>
+
+    <resultMap id="oracle">
+        <result type="SMALLINT" reader="s2.adapi.framework.dao.reader.IntColumnReader"/>
+        <result type="DATE" reader="s2.adapi.framework.dao.reader.FormattedTimeStampColumnReader"
+format="yyyyMMddHHmmss"/>
+        <result type="TIMESTAMP"
+reader="s2.adapi.framework.dao.reader.FormattedTimeStampColumnReader"
+format="yyyyMMddHHmmssSSS"/>
+    </resultMap>
+
+    <resultMap id="postgres">
+        <result type="TIMESTAMP" reader="s2.adapi.framework.dao.reader.EpochTimeStampColumnReader"/>
+    </resultMap>
+
+</sqls>
+```
+
+- <resultMap id=""> : DBMS 종류별로 정의한다. id 에 DBMS 종류를 지정한다. DBMS 종류멸 명칭은 아래와 같다.
+	- Oracle : oracle
+	- DB2 : db2
+	- PostgreSQL : postgres
+	- MySql : mysql
+	- SqlServer : mssql
+	- Sybase : sybase
+- <result> : 하나의 매핑을 정의한다.
+	- type : DB  컬럼의 타입 명칭을 지정한다. java.sql.Types 에서 정의한 명칭이다. (VARCHAR, DATE 등)
+	- reader : 사용할 ColumnReader의 클래스명을 지정한다.
+	- format : format 문자열이 필요한 ColumnReader 의 경우에는 format  문자열을 지정한다. (옵션사항)
+
+   
