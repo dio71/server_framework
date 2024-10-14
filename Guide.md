@@ -1496,4 +1496,65 @@ ColumnReader![](vertopal_b378c48198ea424d858d505c4b800e25/media/image3.png)
 	- reader : 사용할 ColumnReader의 클래스명을 지정한다.
 	- format : format 문자열이 필요한 ColumnReader 의 경우에는 format  문자열을 지정한다. (옵션사항)
 
-   
+## 2) JdbcQueryDAO
+
+XML 파일로 작성된 SQL 문을 실행시키는 기능을 제공하는 DAO이며 [JdbcDAO]를 상속받아 구현되었다. XML내에서 여러가지 조건에 따른 분기처리가 가능하며 iBATIS의 XML 구조와 유사하게 구성되어 있다.
+
+**Query XML 파일 예시**
+
+```java
+<?xml version=\'1.0\' encoding=\'utf-8\'?>
+<sqls>
+
+    <statement id="getCategoryList">
+        SELECT a.cat_cd, COALESCE(c.cat_nm, b.cat_nm) as cat_nm, b.updt_dt 
+          FROM str_pcatapps a, str_prdcats b 
+               LEFT JOIN str_pcatlangs c ON b.cat_cd = c.cat_cd AND c.lang_cd = #lang_cd#
+         WHERE a.app_id = #%appid#
+           AND a.cat_cd = b.cat_cd
+           AND b.use_yn = 'Y\'
+         ORDER BY a.seq_no
+    </statement>
+
+    <statement id="getCategoryImage">
+        SELECT cat_img 
+          FROM str_prdcats
+         WHERE cat_cd = #cat_cd#
+    </statement>
+
+    <statement id="getProductListOfCategories">
+        SELECT b.prd_cd, b.cat_cd, b.tr_type, 
+CAST(b.prd_price * #pnt_rate# AS NUMERIC(15,2)) as pnt_amt, b.updt_dt,
+COALESCE(c.corp_nm, b.corp_nm) as corp_nm,
+COALESCE(c.prd_nm, b.prd_nm) as prd_nm
+          FROM str_prdapps a, str_products b LEFT JOIN str_prdlangs c ON b.prd_cd = c.prd_cd AND c.lang_cd = #lang_cd#
+         WHERE a.app_id = #%appid#
+           AND a.prd_cd = b.prd_cd
+         <isNotEmpty property="cat_cd">
+           AND b.cat_cd IN <iterate property="cat_cd" open="("
+close=")" conjunction=",">#cat_cd[]#</iterate>
+         </isNotEmpty>
+         <isEmpty property="cat_cd">
+           AND b.cat_cd = 0
+         </isEmpty>
+           AND b.use_yn = \'Y\'
+         ORDER BY b.ord_no, b.prd_price
+    </statement>
+
+    <statement id="getProductList">
+        SELECT b.prd_cd, b.cat_cd, b.tr_type, CAST(b.prd_price * #pnt_rate# AS NUMERIC(15,2)) as pnt_amt, b.updt_dt,
+ COALESCE(c.corp_nm, b.corp_nm) as corp_nm,
+COALESCE(c.prd_nm, b.prd_nm) as prd_nm
+          FROM str_prdapps a, str_products b LEFT JOIN str_prdlangs c ON b.prd_cd = c.prd_cd AND c.lang_cd = #lang_cd#
+         WHERE a.app_id = #%appid#
+           AND a.prd_cd = b.prd_cd
+       <isNotEmpty property="cat_cd">
+           AND b.cat_cd = #cat_cd# 
+       </isNotEmpty>
+           AND b.use_yn = \'Y\'
+         ORDER BY b.ord_no, b.prd_price
+    </statement>
+</sqls>
+```
+
+Query XML 파일의 작성 방법은 [Query XML] 을 참고한다.   
