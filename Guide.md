@@ -1331,26 +1331,26 @@ JdbcDAO 가 제공하는 메소드들은 다음과 같다.
 	- sql : PreparedStatement 생성을 위한 SQL 문장
 	- params : ? 파라메터에 매핑될 값들을 순서대로 담은 List 객체
 	- Return : SQL 실행으로 영향을 받은 row 수를 반환한다. 
-- protected ValueObject executeUpdateReturnKeys(Connection con, String sql, List<Object> param, int numKeyCols[, ResultMap ramp]) throws SqlQueryException
+- protected ValueObject executeUpdateReturnKeys(Connection con, String sql, List<Object> param, int numKeyCols\[, ResultMap ramp]) throws SqlQueryException
 	- Insert SQL을 실행하며 실행결과로 테이블에 입력된 값을 다시 반환받기 위하여 사용된다.
 	- numKeyCols : 리턴해 줄 컬럼수이며 DDL 로 테이블 생성시 만들어진 순서대로 담겨진다.
-	- ResultMap 은 DB에서 컬럼의 값을 읽어올때 어떤 ColumnReader 를 사용하여 값을 읽어 올지 지정하는 용도로 사용된다. 컬럼의 타입별로 [ColumnReader] 를 지정하거나 컬럼의 명칭에 따라서 ColumnReader 를 지정할 수 있다. ResultMap 을 지정하지 않는 경우에는 프레임워크 내부에 설정된 디폴트 ColumnReader 들이 사용된다. 디폴트 ColumnReader 들은 사용되는 DB의 종류에 따라서 다르게 설정되어 있다.
+	- ResultMap 은 DB에서 컬럼의 값을 읽어올때 어떤 ColumnReader 를 사용하여 값을 읽어 올지 지정하는 용도로 사용된다. 컬럼의 타입별로 \[ColumnReader] 를 지정하거나 컬럼의 명칭에 따라서 ColumnReader 를 지정할 수 있다. ResultMap 을 지정하지 않는 경우에는 프레임워크 내부에 설정된 디폴트 ColumnReader 들이 사용된다. 디폴트 ColumnReader 들은 사용되는 DB의 종류에 따라서 다르게 설정되어 있다.
 	- Return : 지정된 컬럼에 입력된 실제 값을 ValueObject 객체에 담아서 반환한다.
 
-- protected ValueObject executeUpdateReturnKeys(Connection con, String sql, List<Object> param, int[] columnIndexes[, ResultMap ramp]) throws SqlQueryException
+- protected ValueObject executeUpdateReturnKeys(Connection con, String sql, List<Object> param, int[] columnIndexes\[, ResultMap ramp]) throws SqlQueryException
 	- Insert SQL을 실행하며 실행결과로 테이블에 입력된 값을 다시 반환받기 위하여 사용된다.
 	- columnIndexes : 반환받을 컬럼의 위치 index 를 지정한다.
 	- 나머지는 위 메소드와 동일한다.
 
-- protected ValueObject executeUpdateReturnKeys(Connection con, String sql, List<Object> param, String[] columnNames[, ResultMap ramp]) throws SqlQueryException
+- protected ValueObject executeUpdateReturnKeys(Connection con, String sql, List<Object> param, String[] columnNames\[, ResultMap ramp]) throws SqlQueryException
 	- Insert SQL을 실행하며 실행결과로 테이블에 입력된 값을 다시 반환받기 위하여 사용된다.
 	- columnNames : 반환받을 컬럼의 명칭을 지정한다.
 	- 나머지는 위 메소드와 동일하다.
 
 ### (4) SELECT 문
 
-- protected ValueObject executeQuery(Connection con, String sql, List<Object> param[, ResultMap rmap]) throws SqlQueryException
-- protected ValueObject executeQuery(Connection con, String sql, List<Object> param, ValueObject pageVO[, ResultMap rmap]) throws SqlQueryException
+- protected ValueObject executeQuery(Connection con, String sql, List<Object> param\[, ResultMap rmap]) throws SqlQueryException
+- protected ValueObject executeQuery(Connection con, String sql, List<Object> param, ValueObject pageVO\[, ResultMap rmap]) throws SqlQueryException
 	- Select 조회 SQL 을 수행한다.
 	- sql : PreparedStatement 생성을 위한 SQL 문장
 	- params : ? 파라메터에 매핑될 값들을 순서대로 담은 List 객체
