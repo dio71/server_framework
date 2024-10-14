@@ -1337,12 +1337,12 @@ JdbcDAO 가 제공하는 메소드들은 다음과 같다.
 	- ResultMap 은 DB에서 컬럼의 값을 읽어올때 어떤 ColumnReader 를 사용하여 값을 읽어 올지 지정하는 용도로 사용된다. 컬럼의 타입별로 \[ColumnReader] 를 지정하거나 컬럼의 명칭에 따라서 ColumnReader 를 지정할 수 있다. ResultMap 을 지정하지 않는 경우에는 프레임워크 내부에 설정된 디폴트 ColumnReader 들이 사용된다. 디폴트 ColumnReader 들은 사용되는 DB의 종류에 따라서 다르게 설정되어 있다.
 	- Return : 지정된 컬럼에 입력된 실제 값을 ValueObject 객체에 담아서 반환한다.
 
-- protected ValueObject executeUpdateReturnKeys(Connection con, String sql, List<Object> param, int[] columnIndexes\[, ResultMap ramp]) throws SqlQueryException
+- protected ValueObject executeUpdateReturnKeys(Connection con, String sql, List<Object> param, int\[] columnIndexes\[, ResultMap ramp]) throws SqlQueryException
 	- Insert SQL을 실행하며 실행결과로 테이블에 입력된 값을 다시 반환받기 위하여 사용된다.
 	- columnIndexes : 반환받을 컬럼의 위치 index 를 지정한다.
 	- 나머지는 위 메소드와 동일한다.
 
-- protected ValueObject executeUpdateReturnKeys(Connection con, String sql, List<Object> param, String[] columnNames\[, ResultMap ramp]) throws SqlQueryException
+- protected ValueObject executeUpdateReturnKeys(Connection con, String sql, List<Object> param, String\[] columnNames\[, ResultMap ramp]) throws SqlQueryException
 	- Insert SQL을 실행하며 실행결과로 테이블에 입력된 값을 다시 반환받기 위하여 사용된다.
 	- columnNames : 반환받을 컬럼의 명칭을 지정한다.
 	- 나머지는 위 메소드와 동일하다.
@@ -1360,7 +1360,7 @@ JdbcDAO 가 제공하는 메소드들은 다음과 같다.
 
 ### (5) Batch SQL
 
-- protected int[] executeBatch(Connection con, String sql, List<?>[] params)
+- protected int\[] executeBatch(Connection con, String sql, List<?>\[] params)
 	- 하나의 SQL 문에 여러건의 파라메터로 반복실행하고자 할 경우 사용된다.
 	- Insert, update, delete SQL 을 실행할 수 있다.
 	- params : SQL 문에 순서대로 매핑될 파라메터 리스트가 여러건 필요하므로 이를 배열에 담아서 전달한다.
