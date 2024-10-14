@@ -757,7 +757,7 @@ Aspect Oriented Programming (AOP)은 업무 로직에 공통적으로 사용되�
 Method Interceptor 는 특정 객체의 메소드 실행 전과 실행 후에 특정 실행 로직(Advice)을 삽입하는 형태의 Aspect Weaving 이다. 본 프레임워크에서는 Method Interceptor 형태의 AOP 기능만을 제공하며 AOP Alliance 의 관련 Interface 를 구현하였다. 아래는 AOP Alliance 의 interface 들이다.
 
 **AOPAlliance Interfaces**
-*
+
 ```java
 public interface Joinpoint {
    Object proceed() throws Throwable;
@@ -1098,6 +1098,7 @@ RpcCallTargetProxy 는 원격사이트에 있는 서비스를 로컬에 있는 �
     </service>
 
 </services>
+```
 
 RpcWebAction 을 설정하기 위해서는 실제 서비스 호출 기능을 수행할 RpcService 의 구현 클래스가 필요하다. RpcService 는 실제 프로젝트에 맞추어 필요한 세션 정보나 인증 등의 처리 등을 구현한다. 
 
