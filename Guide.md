@@ -1404,6 +1404,7 @@ public interface ColumnReader {
     public Object read(int columnIndex, CallableStatement cstmt) throws SQLException;
 
 }
+```
 
 ### (1) JdbcDAO가 제공하는 ColumnReader 들은 아래와 같다.
 
@@ -1459,18 +1460,20 @@ ColumnReader![](vertopal_b378c48198ea424d858d505c4b800e25/media/image3.png)
 
     <resultMap id="db2">
         <result type="SMALLINT" reader="s2.adapi.framework.dao.reader.IntColumnReader"/>
-        <result type="DATE" reader="s2.adapi.framework.dao.reader.FormattedDateColumnReader" format="yyyyMMdd"/>
-        <result type="TIME" reader="s2.adapi.framework.dao.reader.FormattedTimeColumnReader" format="HHmmss"/>
-        <result type="TIMESTAMP" reader="s2.adapi.framework.dao.reader.FormattedTimeStampColumnReader" format="yyyyMMddHHmmssSSS"/>
+        <result type="DATE" reader="s2.adapi.framework.dao.reader.FormattedDateColumnReader"
+                            format="yyyyMMdd"/>
+        <result type="TIME" reader="s2.adapi.framework.dao.reader.FormattedTimeColumnReader"
+                            format="HHmmss"/>
+        <result type="TIMESTAMP" reader="s2.adapi.framework.dao.reader.FormattedTimeStampColumnReader"
+                                 format="yyyyMMddHHmmssSSS"/>
     </resultMap>
 
     <resultMap id="oracle">
         <result type="SMALLINT" reader="s2.adapi.framework.dao.reader.IntColumnReader"/>
         <result type="DATE" reader="s2.adapi.framework.dao.reader.FormattedTimeStampColumnReader"
-format="yyyyMMddHHmmss"/>
-        <result type="TIMESTAMP"
-reader="s2.adapi.framework.dao.reader.FormattedTimeStampColumnReader"
-format="yyyyMMddHHmmssSSS"/>
+                            format="yyyyMMddHHmmss"/>
+        <result type="TIMESTAMP" reader="s2.adapi.framework.dao.reader.FormattedTimeStampColumnReader"
+                                 format="yyyyMMddHHmmssSSS"/>
     </resultMap>
 
     <resultMap id="postgres">
