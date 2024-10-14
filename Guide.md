@@ -744,3 +744,501 @@ ServiceContext, DiagnosticContext 그리고 트랜젝션 상태정보를 관리�
 	- 현재 쓰레드에 할당된 트랙젝션을 rollback 상태로 마킹한다.
 - public static void clearAll()
 	- 현재 쓰레드에 할당된 ServiceContext 객체와 DiagnosticContext 객체를 모두 삭제한다.
+
+# 4. AOP
+
+Aspect Oriented Programming (AOP)은 업무 로직에 공통적으로 사용되는 여러 기능들 (logging, transaction, security 등) 을 모듈화(Advice)하여 이를 런타임에 업무 로직에 삽입(Aspect Weaving)할 수 있도록 해주는 프로그래밍 기법이다. 본 프레임워크에서는 ServiceContainer 서비스 설정을 통하여 Aspect Weaving 기능을 제공하며 다음과 같은 특징이 있다. 
+
+- [AOP Alliance](http://aopalliance.sourceforge.net/) 의 표준화된 interface 를 기반으로 하고 있으며 그중 Method Interceptor 를 구현하였다.
+- Java의 Dynamic Proxy 를 기반으로 구현된 AOP 프레임워크이다.  그러므로 AOP 를 적용하고자 하는 서비스는 반드시 Interface 가 명시되어야 한다.
+
+## 1) Method Interceptor
+
+Method Interceptor 는 특정 객체의 메소드 실행 전과 실행 후에 특정 실행 로직(Advice)을 삽입하는 형태의 Aspect Weaving 이다. 본 프레임워크에서는 Method Interceptor 형태의 AOP 기능만을 제공하며 AOP Alliance 의 관련 Interface 를 구현하였다. 아래는 AOP Alliance 의 interface 들이다.
+
+**AOPAlliance Interfaces**
+*
+```java
+public interface Joinpoint {
+   Object proceed() throws Throwable;
+   Object getThis();
+   AccessibleObject getStaticPart();
+}
+
+public interface Invocation extends Joinpoint {
+   Object[] getArguments();
+}
+
+public interface MethodInvocation extends Invocation {
+   Method getMethod();
+}
+
+public interface Advice {
+}
+
+public interface Interceptor extends Advice {
+}
+
+public interface MethodInterceptor extends Interceptor {
+   Object invoke(MethodInvocation var1) throws Throwable;
+}
+```
+
+### (1) MethodInvocation
+
+AOP 에서는 메소드 호출을 MethodInvocation 이라는 Interface 로 표현하고 있다. 본 프레임워크에서는 이를 구현한
+**s2.adapi.framework.aop.MethodInvocation** 클래스를 제공하고 있으며 구현된 각 메소드의 의미는 다음과 같다.
+
+- public Method getMethod()
+	- 호출되고 있는 메소드 객체를 반환한다.
+- public Object[] getArguments()
+	- 호출되고 있는 메소드의 Arguments 들을 배열로 반환한다.
+- public Object getThis()
+	- 메소드 호출 대상 객체를 반환한다. 
+- public Object proceed() throws Throwable
+	- 호출된 메소드를 진행하고 해당 메소드 실행으로 반환된 객체를 반환한다.
+
+### (2) MethodInterceptor 구현하기
+
+- MethodInterceptor 를 구현하기 위하여 클래스를 생성하고 org.aopalliance.intercept.MethodInterceptor 를 implements 한다. 
+- public Object invoke(MethodInvocation invocation) throws Throwable 를 구현한다. 
+- invoke() 메소드를 구현하는 일반적인 패턴은 아래와 같다.
+	- 원래의 메소드 호출전에 수행할 작업을 구현한다.
+	- invocation.proceed() 를 호출하여 원래의 메소드를 수행한다.
+	- 리턴된 결과를 이용해 필요한 작업을 수행한다.
+	- 메소드를 호출한 쪽으로 반환할 결과를 리턴한다. 이것은 proceed() 의 결과를 꼭 그대로 반환할 필요는 없다.
+	- 다음은 실제 MethodInterceptor 의 구현 예시이다. 메소드 실행에 대한 정보를 로그에 남기는 기능을 수행한다.
+
+**MethoInterceptor 구현 예시**
+
+```java
+package test.aop;
+
+import org.aopalliance.intercept.MethodInterceptor;
+import org.aopalliance.intercept.MethodInvocation;
+
+import org.slf4j.Logger;
+
+public class SimpleLogInterceptor implements MethodInterceptor {
+
+    public Object invoke(MethodInvocation invocation) throws Throwable 
+    {
+
+        long stime = System.currentTimeMillis() ;
+
+        // logging 용 객체를 생성
+        Logger log = Logger.getLogger(invocation.getThis().getClass());
+
+        // 호출된 메소드 명칭과 전달된 Argument들을 logging
+        log.info(invocation.getMethod().getName()+"() starts.");
+
+        Object[] args = invocation.getArguments();
+
+        if (args != null) {
+            for(int i = 0; i < args.length; i++) {
+                log.info(String.valueOf(invocation.getArguments()[i]));
+            }
+        } 
+        else {
+            log.info("No Input Argument\...");
+        }
+
+        // 원래 메소드를 호출한다.
+
+        Object retObj;
+
+        try {
+            retObj = invocation.proceed();
+        }
+
+        catch (Throwable e) {
+            long etime = System.currentTimeMillis() ;
+            log.error(invocation.getMethod().getName() + "() errors.[" + e.toString() + "]("  + (etime-stime) + " msecs}");
+
+            throw e;
+        }
+
+        // 리턴된 결과값을 logging
+        long etime = System.currentTimeMillis() ;
+        log.info(String.valueOf(retObj));
+        log.info(invocation.getMethod().getName() + "() ends.(" + (etime - stime) + " msecs}");
+
+        // 원 메소드에서 반환한 값을 그대로 다시 반환한다.
+        return retObj;
+    }
+}
+```
+
+### (3) 서비스 설정파일에 등록하기
+
+- 작성된 MethodInterceptor 구현 클래스는 서비스 설정파일에 등록되어야한다. 이때 작성된 MethodInterceptor 자체를 등록하는 것 외에도 이를 다시 InterceptorProxy 에 등록하는 과정이 필요하다. 
+- InterceptorProxy 는 실제 MethodInterceptor 기능을 다른 서비스에 적용하기 위하여 제공되는 기능이며 여기에는 하나 이상의 MethodInterceptor 를 설정할 수 있어 MethodInterceptor 가 여러 개 차례로 적용될 수 있도록 할 수 있다.
+- Interceptor 를 서비스에 적용하기 위해서는 설정된 InterceptorProxy 의 서비스 명을 적용하고자 하는 서비스의 interceptor 속성에 지정한다.
+- 다음은 서비스 설정파일 작성 예시이다.
+
+**MethodInterceptor 서비스 설정하기**
+
+```xml
+<services module="system">
+    <service name="myInterceptor1"
+             interface="org.aopalliance.intercept.MethodInterceptor" 
+             class="test.aop.SimpleLogInterceptor "
+             activate="true"
+             pre -init="false"
+             singleton="true">
+    </service>
+
+    <service name="testInterceptorProxy" 
+             interface="s2.adapi.framework.aop.InterceptorProxy" 
+             class="s2.adapi.framework.aop.MethodInterceptorProxy" 
+             activate="true"
+             pre-init="false"
+             singleton="true">
+        <property name="interceptor" ref="**myInterceptor1**"/> 
+        <property name="interceptor" ref="myInterceptor2"/>     
+    </service>
+</services>
+```
+
+**Interceptor 적용하기**
+
+```xml
+<services module="store" package="s2.adapi.app.service.store" pre-init="false">
+    <service name="StoreServiceDAO"
+             interface="${package}.dao.StoreServiceDAO"
+             class="${package}.dao.StoreServiceDAOImpl"
+             interceptor="system.testInterceptorProxy"
+             singleton="true">
+        <property name="datasource" ref="jdbc.apidb"/>
+        <property name="sql" value="sqls/store_service_sqls.xml"/>
+    </service>
+</services>
+```
+
+위의 예에서는 SimpleLogInterceptor 클래스를 myInterceptor1 이라는 명칭으로 서비스 등록하였으며 이를 다시 testInterceptorProxy 서비스에 injection 하였다. testInterceptorProxy 는 프레임워크가 제공하는 MethodInterceptorProxy 를 사용하기 위하여 등록하였으며 MethodInterceptor 를 실제 업무용 서비스들에 적용하기 위하여 반드시 필요하다. MethodInterceptorProxy 는 injection 된 MethodInterceptor 들을 순서대로 실행시킨다. 위의 예시에서는 myInterceptor1 과 myInterceptor2 라는 2개의 MethodInterceptor 서비스를 injection 하였으며 이 경우 실행 순서는 myInterceptor1 -> myInterceptor2 -> 원래 메소드 실행 -> myInterceptor2 -> myInterceptor1 의 순서로 실행이 이루어진다.
+
+업무 서비스에서 위 MethodInterceptor 를 적용하기 위하여 서비스 설정파일의 interceptor 속성에 사용하고자하는 MethodInterceptorProxy 서비스명을 설정하면 된다. interceptor 로 설정하였여도 해당 MethodInterceptorProxy 의 activate 설정이 false 로 되어 있으면 적용되지 않는다. 또 MethodInterceptorProxy 에 inject 된 각각의 MethodInterceptor들 중 activate 가 false 설정된 것도 적용되지 않는다.
+
+## 2) Auto Proxy
+
+각각의 서비스는 서비스 설정파일에 interceptor 설정을 통하여 원하는 MethodInterceptor 를 런타임에 적용할 수 있다. 그러나 이러한 방법은 각각의 서비스에서 개별로 설정을 해야하므로 Interceptor 를 변경하거나 제거하는 것이 매우 번거롭다. 각각의 서비스에서 interceptor 설정을 하지 않아도 원하는 서비스에 MethodInterceptor 를 설정할 수 있도록 제공되는 기능이 AutoProxy 이다.
+
+여러 개발자가 같이 진행하는 큰 규모의 프로젝트에서는 AutoProxy 기능을 통하여 공통 Interceptor 설정을 쉽게 변경할 수 있는 장점이 있다. 아래는 프레임워크에서 제공하는 RegexpPatternAutoProxy 의 서비스 설정 예시이다.
+
+**RegexpPatterAutoProxy**
+
+```xml
+<services module="system">
+    <service name="myInterceptor1"
+             interface="org.aopalliance.intercept.MethodInterceptor" 
+             class="test.aop.SimpleLogInterceptor "
+             activate="true"
+             pre -init="false"
+             singleton="true">
+    </service>
+
+    <service name="autoproxy"
+             class="s2.adapi.framework.aop.auto.RegexpPatternAutoProxy"
+             activate="true"
+             pre-init="true"
+             singleton="true">
+       <property name="interceptor" ref="myInterceptor1"/>
+       <property name="packagePattern" value="com\\.s2adapi\\.rwdapp\\..*"/>
+  </service>
+
+</services>
+```
+
+위의 예에서 myInterceptor1 으로 등록된 MethodInterceptor 를 autoproxy 에 inject 하였다. 등록된 autoproxy 서비스는 프레임워크에서 제공하는 s2.adapi.framework.aop.auto.RegexpPatter AutoProxy 클래스를 사용하였다.
+RegexpPatterAutoProxy는 packagePattern 으로 지정된 패턴 문자열에 해당되는 클래스들에 자동적으로 MethodInterceptor 를 적용한다. 위의 예시에서는 구현 클래스가 s2.adapi.addzzl. 로 시작하는 모든 서비스에 자동적으로 SimpleLogInterceptor 가 적용되도록 설정하였다.
+
+## 3) Target Proxy
+
+Target Proxy 는 앞서 기술된 MethodInterceptor 와는 조금 다른 개념이다. Target Proxy 는 실제 호출되는 타겟 서비스를 흉내내기위하여  제공되는 기능이다. 서비스를 호출하는 입장에서 보면 같은 interface 를 사용하여 서비스를 호출하지만 그 서비스를 제공하는 원래의 클래스를 TargetProxy 가 중간에 흉내를 낸다고 생각하면 된다.
+
+예를 들어 A 라는 서비스가 B 라는 서비스를 사용한다고 하자. 물리적으로 같은 서버에 같이 존재한다고 하면 A 가 B 를 그대로 호출(method invocation)하면된다. 이러한 구성에서 만약 B 서비스를 물리적으로 다른 서버로 옮겼다면 A 가 B 를 바로 호출할 수 없다. 이 경우 A 가 있는 시스템에 TargetProxy 를 생성하여 마치 B와 같은 역활을 시키고 (B의 interface 를 제공) TargetProxy 는 A의 메소드 호출을 받으면 원격지에 있는 실제 B 를 호출하여 결과를 반한한다고 하면 A 입장에서는 B가 마치 같은 시스템에 있는 것과 동일하게 사용할 수 있다. 이렇게 실제 서비스를 호출하는 방식을 다양하게 제공할 수 있는 것이 TargetProxy 이다. 
+
+### (1) ThreadLocalTargetProxy
+
+B 라는 서비스가 있다고 하자 그런데 B 서비스는 다중 쓰레드 환경을 제공하지 않아 한번에 하나의 쓰레드만 실행할 수 있다. 이 경우 실제 다중 쓰레드 환경에서는 각각의 호출을 모두 동기화시켜야 하는데 결국 동시성이 매우 제약이되고 B 서비스로 인하여 전체 시스템의 병목 현상이 발생할 수 있다. 이런 상황에서 ThreadLocalTragetProxy 를 사용할 수 있다. ThreadLocalTargetProxy는 원래 서비스를 실행중인 Thread 의 Local 변수로 생성하고 이를 사용하여 원래 서비스를 흉내낸다.
+
+아래는 ThreadLocalTargetProxy 의 서비스 설정 예시이다.
+
+**Test 코드 예시**
+
+```java
+package test.aop;
+
+// ThreadLocalTargetProxy 테스트용 서비스 인터페이스
+public interface ThreadTest {
+    int callMe();
+}
+
+// ThreadLocalTargetProxy 테스트용 서비스 구현 클래스
+public class SingleThreadTestImpl implements ThreadTest {
+
+    private int count = 0;
+
+    @Override
+    public int callMe() {
+        return count++;
+    }
+
+}
+
+// 서비스를 호출하는 테스트 클래스
+
+public class TestServiceCaller {
+
+    private ThreadTest test = null;
+
+    // 호출할 ThreadTest 서비스객체를 inject 받는다.
+
+    public void setTestService(ThreadTest test) {
+        this.test = test;
+    }
+
+    public void runTest() {
+
+        for(int i = 0; i < 0; i++) {
+            new Thread() {
+                public void run() {
+                    test.callMe();
+                }
+            }.start();
+        }
+    }
+}
+```
+
+**서비스 설정 예시**
+
+```xml
+<services module="test">
+
+    <service name="singleThreadService"
+             interface="test.aop.ThreadTest" 
+             class="test.aop.SingleThreadTestImpl "
+             singleton="false">
+    </service>
+
+    <service name="multiThreadService"
+             interface="test.aop.ThreadTest" 
+             class="s2.adapi.framework.aop.target.ThreadLocalTargetProxy"
+             singleton="true">
+       <property name="targetName" value="singleThreadService"/>
+    </service>
+
+    <service name="callerService"
+             class="test.aop.TestServiceCaller">
+        <property name="testService" ref="multiThreadService"/>
+    </service>
+
+</services>
+```
+
+위의 예시에서 callerService 는 ThreadTest 객체를 inject 받아서 사용하고 있다. 그러나 inject 된 ThreadTest 구현 클래스는 실제로는 ThreadLocalTargetProxy 객체이며 이 객체는 ThreadTest 인터페이스를 제공하고 있기때문에 callerService 에서는 문제없이 호출이 가능하다. multiThreadService 로 설정된 ThreadLocalTargetProxy 는 targetName 속성으로 실제 흉내를 내야할 서비스의 명칭(singleThreadService)을 전달받아서 실행시점에 ThreadLocal 변수에 해당 서비스 객체를 생성하여
+호출하도록 구현되어 있다. 주의할 점은 실제 구현 서비스인 singleThreadService 는 singleton = "false" 로 설정해야한다.
+
+### (2) RpcCallTargetProxy
+
+RpcCallTargetProxy 는 원격사이트에 있는 서비스를 로컬에 있는 서비스처럼 사용할 수 있도록 기능을 제공해주는 TargetProxy 구현 클래스이다. RpcCallTargetProxy 를 사용하여 원격지 서비스를 호출하기 위해서는 해당 서버에 프레임워크에서 제공하는 RpcWebAction 서비스가 사용가능하도록 설정되어 있어야 한다. 
+
+주의사항) RpcCallTargetProxy 는 원격 트랜젝션을 제공하지 않으므로 트랜젝션은 원격지와 분리되어 처리되므로 이점을 주의하여야한다.
+
+다음은 RcpCallTargetProxy 를 사용하여 원격지에 있는 서비스를 호출하는 실제 예시이다.
+
+**원격지 호출 대상 서비스 설정 (common.Common) 서비스 예시**
+
+```xml
+<services module="common" package="s2.adapi.ad.service" pre-init="false">
+
+    <service name="Common"
+             interface="${package}.common.Common"
+             class="${package}.common.CommonImpl"
+             singleton="true">
+        <property name="dao" ref="CommonDAO"/>
+    </service>
+
+<service name="CommonDAO"
+             class="s2.adapi.framework.dao.SqlQueryDAO"
+             singleton="true">
+        <property name="datasource" ref="jdbc.apidb"/>
+        <property name="sql" value="sqls/service_common_sqls.xml"/>
+    </service>
+
+</services>   
+```
+ 
+**원격지 RpcWebAction 서비스 설정 예시**
+
+```xml
+<services module="system">
+
+    <!-- RPC -->
+    <service name="rpcDAO"
+             class="s2.adapi.framework.dao.SqlQueryDAO"
+             singleton="true">
+        <property name="datasource" ref="jdbc.apidb"/>
+        <property name="sql" value="sqls/rpc_service_sqls.xml"/>
+    </service>
+
+    <service name="RpcService"
+             interface="s2.adapi.framework.web.rpc.RpcService"
+             class="${package}.rpc.AuthRpcService"
+             singleton="true">
+        <property name="dao" ref="rpcDAO"/>
+    </service>
+
+    <service name="rpc.main"
+             interface="s2.adapi.framework.web.action.WebAction"
+             class="s2.adapi.framework.web.rpc.RpcWebAction"
+             singleton="true">
+        <property name="rpcService" ref="RpcService"/>
+    </service>
+
+</services>
+
+RpcWebAction 을 설정하기 위해서는 실제 서비스 호출 기능을 수행할 RpcService 의 구현 클래스가 필요하다. RpcService 는 실제 프로젝트에 맞추어 필요한 세션 정보나 인증 등의 처리 등을 구현한다. 
+
+아래는 RpcService 인터페이스와 실제 구현 클래스 예시이다.
+
+**RpcService 인터페이스**
+
+```java
+package s2.adapi.framework.web.rpc;
+
+public interface RpcService {
+    /**
+     * 호출할 서비스 명칭과 메소드 명칭 그리고 메소드에 전달할 파라메터들을 배열로 받는다. 실제 서비스를 찾아서 호출해야하며 그 결과를 반환하도록 구현해야한다.
+     * 
+     * @param serviceName 호출할 서비스 명칭
+     * @param methodName 호출할 메소드 명칭
+     * @param params 메소드에 전달할 파라메터 들
+     * @return 서비스 호출 결과
+     * @throws Throwable
+     */
+
+    public Object invokeService(String serviceName, String methodName, Object[] params) throws Throwable;
+}
+```
+
+**RpcService 구현 예시**
+
+```java
+package s2.adapi.common.service.rpc;
+
+import s2.adapi.framework.context.ContextAwareService;
+import s2.adapi.framework.context.ServiceContext;
+import s2.adapi.framework.dao.SqlQueryDAO;
+import s2.adapi.framework.util.ObjectHelper;
+import s2.adapi.framework.vo.ValueObject;
+import s2.adapi.framework.web.rpc.RpcService;
+
+public class AuthRpcService extends ContextAwareService implements RpcService {
+
+    private SqlQueryDAO rpcServiceDAO = null;
+
+    public void setDao(SqlQueryDAO dao) {
+        rpcServiceDAO = dao;
+    }
+
+    public Object invokeService(String serviceName, String methodName, Object[] params) throws Throwable {
+
+        // RPC 코드확인 하여 IP 및 권한 확인한다.
+        ValueObject rpcVO = rpcServiceDAO.executeQuery("getRpcInfo", null);
+
+        if (rpcVO.size() == 0) {
+            throw new Exception("no authorized requst...");
+        }
+
+        // 조회된 정보를 세션에 설정한다.
+        ServiceContext serviceContext = getServiceContext();
+
+        serviceContext.setRole(rpcVO.get(0)); // cust_id, up_cust_id, cust_nm, logn_id, auth_cd, tz
+
+        // 요청한 서비스를 호출한다.
+        Object svcObject = getApplicationContext().getServiceContainer().getService(serviceName);
+        Object retObject = ObjectHelper.invoke((Class<?>)null, svcObject, methodName, null, params);
+
+        return retObject;
+    }
+}
+```
+
+**호출하는 쪽의 서비스 설정 (RpcTargetProxy) 예시**
+
+```xml
+<services module="coin" package="s2.adapi.app.portal" pre-init="false">
+
+    <service name="CommonProxy"
+             interface="s2.adapi.ad.service.common.Common"
+             class="s2.adapi.framework.web.rpc.RpcCallTargetProxy"
+             singleton="true">
+        <property name="rpcClient" ref="KkcRpcClient"/>
+        <property name="targetName" value="common.Common"/>
+    </service>
+
+    <service name="KkcRpcClient"
+             class="s2.adapi.framework.web.rpc.RpcClient"
+             singleton="true">
+        <property name="rpcKey" value="kkc"/>
+        <property name="userKey" value="logn_id"/>
+        <property name="serviceUrl" value="http://admin.s2adapi.com/s2adapi/system.rpc.main"/>
+    </service>
+
+</services> 
+```
+
+RpcClient 는 원격지 서버로 RPC 호출을 수행하는 기능을 제공하며 각 속성의 의미는 다음과 같다.
+
+- rcpKey : 클라이언트 구분값으로 사용된다. 원격지 서버의 ServiceContext 에 "rpckey" 라는 이름으로 설정된다.
+- userKey : 사용자 구분값으로 사용되는 ServiceContext 의 명칭이다. 호출하는 시스템에서 사용자 구분값을 가져오기 위하여 사용되는 key 값이며, 원격지 서버에서는 항상 "mduname" 라는 이름으로 ServiceContext 에 설정된다.
+- serviceUrl : 호출할 원격지서버의 RpcWebAction URL 이다. 원격지 서버의 설정을 보면 system.rpc.main 으로 설정되어 있는 것을 확인할 수 있다.
+
+CommonProxy 로 설정된 서비스는 interface 가 원격지 서버의 common.Common 서비스와 동일하기 때문에 마치 로컬에 있는 서비스처럼 사용할 수 있다. 실제 호출이 되면 이를 RpcCallTargetProxy 가 RpcClient 를 사용하여 원격지의 common.Common 서비스를 호출하는 구조이다.
+
+### (3) TargetProxy  구현하기
+
+원하는 기능을 수행하는 TargetProxy 의 구현 클래스를 작성할 수 있다. TargetProxy 는 프레임워크에서 제공하는
+s2.adapi.framework.aop.target.AbstractTargetProxy 클래스를 상속받아서 아래의 invoke() 메소드를 override 하면 된다.
+
+- public Object invoke(Method method, Object[] args) throws Throwable
+	- method : 호출되는 Method 객체이다.
+	- args : 호출되는 method 의 argument 들이다.
+	- return : 실행 결과로 반환되는 객체이다.
+
+아래는 ThreadLocalTargetProxy 의 전체 소스이다.
+
+**ThreadLocalTargetProxy**
+
+```java
+package s2.adapi.framework.aop.target;
+
+import java.lang.reflect.Method;
+
+/**
+ * ThreadLocal 변수를 사용하여 쓰레드 별로 target 객체를 생성하는 TargetProxy의 구현클래스이다.
+ */
+
+public class ThreadLocalTargetProxy extends AbstractTargetProxy {
+
+    protected static ThreadLocal<Object> targetObject = new ThreadLocal<Object>();
+    protected String targetName = null;
+
+    public void setTargetName(String name) {
+        targetName = name;
+    }
+
+    public Object invoke(Method method, Object[] args) throws Throwable {
+
+        Object svcObject = targetObject.get();
+        if (svcObject == null) {
+            svcObject = getServiceContainer().getService(targetName);
+            targetObject.set(svcObject);
+        }
+
+        return method.invoke(svcObject, args);
+    }
+}
+```
