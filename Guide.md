@@ -1324,7 +1324,7 @@ JdbcDAO 가 제공하는 메소드들은 다음과 같다.
 - protected void close(Connection con) throws SqlQueryException : Connection 객체를 close 한다.
 - protected void close(Connection con, PreparedStatement ps, ResultSet rs) throws SqlQueryException : Connection 객체와 PreparedStatement 객체 그리고 ResultSet 객체를 한번에 close 한다.
 
-### (3) INSERT, UPDATE, DELETE 
+### (3) INSERT, UPDATE, DELETE
 
 - protected int executeUpdate(Connection con, String sql, List<Object> param) throws SqlQueryException
 	- Insert, update, delete SQL 문을 실행한다. 
