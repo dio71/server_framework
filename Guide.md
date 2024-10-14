@@ -231,8 +231,8 @@ public interface ServiceContainer {
     public Object getService(String svcName) throws ServiceContainerException;
 
     /**
-     * 주어진 타입명에 해당되는 서비스 객체  목록을 반환한다. 하위클래스는 여부는 고려하지 않고 타입명이 정확히 일치하는
-경우만 찾아서 반환한다. 타입 명 비교 시에 서비스의 interface와 class 설정 값을 모두 확인한다.  
+     * 주어진 타입명에 해당되는 서비스 객체  목록을 반환한다. 하위클래스는 여부는 고려하지 않고 타입명이 정확히 일치하는 경우만 찾아서 반환한다.
+     * 타입 명 비교 시에 서비스의 interface와 class 설정 값을 모두 확인한다.  
      * @param typeName 얻고자하는 서비스의 클래스 명(전체 패키지)
      * @return 해당 서비스 객체를 담고 있는 Map 객체
      * @throws ServiceContainerException 서비스 객체 생성 시 오류가 발생했을 경우
@@ -625,5 +625,40 @@ public class BooImpl implements BooInf {
         return sb.toString();
     }
 }
+```
+
+## 3) ReloadableXmlServiceContainer
+
+Hot deploy 기능을 제공하는 ServiceContainer 의 구현 클래스이며 XmlConfiguredServiceContainer의 하위 클래스이다. 내부적으로 별도의 URLClassLoader를 생성하며 이를 사용하여 EnlistedServiceContainer 객체를 생성하여 사용한다.  FileWatchdog 를 사용하여 모듈 Jar 파일의 변화를 감지하며 모듈 Jar 파일이 변경되면 reload() 메소드가 호출된다. reload()
+메소드는 새로운 URLClassloader 와 이를 사용한 EnlistedServiceContainer 객체를 새로 생성하여 기존 서비스 컨테이너 객체를 교체한다.
+
+프레임워크 설정 파일(s2adapi-config.properties) 내에서 관련된 설정이 이루어지며 설정 항목은 아래와 같다. (프레임워크 설정 파일은 [Configuration] 을 참조)
+
+- s2adapi.container.default.name : 디폴트 서비스 컨테이너의 명칭을 설정한다.
+- s2adapi.container.<컨테이너명칭>.impl : 사용할 서비스 컨테이너의 구현 클래스를 설정한다. 
+- s2adapi.container.<컨테이너명칭>.reload.interval : 모듈을 reload 하기 위하여 체크하는 시간 간격이다. (초)
+- s2adapi.container.<컨테이너명칭>.dir.module : 모듈 Jar 파일들이 위치하는 경로이다. 절대 경로이다.
+- s2adapi.container.<컨테이너명칭>.dire.class : 모듈 Jar 파일들의 압축을 풀 디렉토리 경로이다.
+- s2adapi.container.<컨테이너명칭>.service.config.path : 서비스 설정파일이 존재하는 위치이다. 클래스 패스로 지정한다.
+- s2adapi.container.<컨테이너명칭>.service.config : 실제 로딩할 서비스 설정파일의 파일 명칭 패턴을 지정한다. 콤마(,) 를 사용하여 여러개를 나열할 수 있다.
+
+다음은 실제 설정 예시이다.
+
+**service configuration**
+
+```
+####################################################################
+#        s2adapi ServiceContailer configurations
+####################################################################
+
+s2adapi.container.default.name=s2adapi
+s2adapi.container.s2adapi.impl=s2.adapi.framework.container.impl.ReloadableXmlServiceContainer
+s2adapi.container.s2adapi.reload.interval=5
+s2adapi.container.s2adapi.dir.module=${s2adapi.config.base.absolute}/../../../components
+s2adapi.container.s2adapi.dir.class=${s2adapi.config.base.absolute}/../../../../../work/\_s2adapi\_
+s2adapi.container.s2adapi.service.config.path=svcdefs
+s2adapi.container.s2adapi.service.config=s2adapi\_.*\\\\.xml
+
+# 참고) ${s2adapi.config.base.absolute} 는 이 설정 파일(s2adapi-config.properties)의 절대 경로를 담고 있다.
 ```
 
