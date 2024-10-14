@@ -1347,6 +1347,7 @@ JdbcDAO 가 제공하는 메소드들은 다음과 같다.
 	- columnNames : 반환받을 컬럼의 명칭을 지정한다.
 	- 나머지는 위 메소드와 동일하다.
 
+
 ### (4) SELECT
 
 - protected ValueObject executeQuery(Connection con, String sql, List<Object> param[, ResultMap rmap]) throws SqlQueryException
@@ -1358,6 +1359,7 @@ JdbcDAO 가 제공하는 메소드들은 다음과 같다.
 	- ResultMap 은 DB에서 컬럼의 값을 읽어올때 어떤 ColumnReader 를 사용하여 값을 읽어 올지 지정하는 용도로 사용된다.
 	- Return : 조회된 값들을 ValueObject 에 담아서 반환한다. 조회된 결과가 없는 경우에는 비어있는 ValueObject 객체를 반환한다.
 
+
 ### (5) Batch SQL
 
 - protected int[] executeBatch(Connection con, String sql, List<?>[] params)
@@ -1365,6 +1367,7 @@ JdbcDAO 가 제공하는 메소드들은 다음과 같다.
 	- Insert, update, delete SQL 을 실행할 수 있다.
 	- params : SQL 문에 순서대로 매핑될 파라메터 리스트가 여러건 필요하므로 이를 배열에 담아서 전달한다.
 	- Return : 각 실행에 대하여 처리된 row 수가 담겨진 int[] 이 반환된다. 실행된 SQL 중 에러가 발생한 경우에는 관련된 에러코드가 반환된다.
+
 
 ## ColumnReader
 
