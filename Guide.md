@@ -1483,14 +1483,14 @@ ColumnReader![](vertopal_b378c48198ea424d858d505c4b800e25/media/image3.png)
 </sqls>
 ```
 
-- <resultMap id=""> : DBMS 종류별로 정의한다. id 에 DBMS 종류를 지정한다. DBMS 종류멸 명칭은 아래와 같다.
+- \<resultMap id=""> : DBMS 종류별로 정의한다. id 에 DBMS 종류를 지정한다. DBMS 종류멸 명칭은 아래와 같다.
 	- Oracle : oracle
 	- DB2 : db2
 	- PostgreSQL : postgres
 	- MySql : mysql
 	- SqlServer : mssql
 	- Sybase : sybase
-- <result> : 하나의 매핑을 정의한다.
+- \<result> : 하나의 매핑을 정의한다.
 	- type : DB  컬럼의 타입 명칭을 지정한다. java.sql.Types 에서 정의한 명칭이다. (VARCHAR, DATE 등)
 	- reader : 사용할 ColumnReader의 클래스명을 지정한다.
 	- format : format 문자열이 필요한 ColumnReader 의 경우에는 format  문자열을 지정한다. (옵션사항)
