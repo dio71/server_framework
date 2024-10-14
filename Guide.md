@@ -1753,7 +1753,7 @@ Query XML  작성 방법에 대하여 설명한다.
 - SQL  문장
 	- SQL 문장은 동적인 SQL 조립을 위하여 하위에 여러 노드를 가질 수 있다.
 	- DML 및 DDL 문을 작성하며 런타임에 바인딩되는 파라메터는 아래와 같은 형태로 정의한다.
-	- 파라메터 형식 : **#name:mode:type@format#** 또는 **$name$**
+	- 파라메터 형식 : **#name:mode:type@format#** 또는 **\$name\$**
 		- #\...# 으로 정의되는 파라메터는 JDBC의 PreparedStatement의 ? 바인딩 방식으로 동작한다. 런타임에 파라메터 값이 달라져도 DB 에서는 같은 SQL 문으로 처리되므로 DB에서 SQL 문장 파싱 작업은 한번만 수행된다.
 		- $\...$ 방식의 파라메터는 SQL 문장 자체를 바꾸는 방식으로 파라메터 값이 바뀌면 DB는 매번 다른 SQL 문장으로 처리하므로 SQL 문장 파싱 작업이 여러번 발생할 수 있다. 성능 이슈가 있으므로 바인딩 방식의 파라메터가 불가능한 경우에만 제한적으로 사용해야한다.
 		- 파라메터 escaping : SQL 문장내에서 \# 이나 $ 문자가 사용되는 경우에는 \## 과 $$ 를  사용한다.
@@ -1784,6 +1784,7 @@ Query XML  작성 방법에 대하여 설명한다.
     INSERT INTO comcdeptm (deptcd, todd, fromdd, deptnm, lastupdtdt) 
            VALUES (#deptcd#, #todd#, #fromdd#, #deptnm#, #updtdt::DATE@yyyy-MM-dd#) ]]>
 </statement> 
+```
 
 - 동적 SQL 작성
 	- 동적 SQL 용 element는 nested 되어 사용이 가능하다.
@@ -1927,7 +1928,7 @@ public ValueObjectAssembler testSPOra(ValueObject pVO) throws SqlQueryException 
 }
 ```
 
-### (3) <resultMap>
+### (3) \<resultMap>
 - 개별 Query 문에 ColumnReader 매핑을 지정하기 위하여 사용된다. 파일 내에서 고유한 id 속성을 가져야한다.
 	- id : resultMap 을 식별하기 위한 명칭이다.
 	- \<result> : <resultMap> 은 하위에 하나 이상의 <result> element 를 가진다. <result> 는 하나의 ColumnReader 매핑을 정의하며 아래의 속성들(attribute)을 가지고 있다.
