@@ -1666,6 +1666,7 @@ public interface StoreServiceDAO {
 
 **작성 예시 : DAO class 구현**
 
+```java
 import java.util.List;
 import s2.adapi.framework.dao.JdbcQueryDAO;
 import s2.adapi.framework.query.SqlQuery;
@@ -1737,6 +1738,7 @@ public class StoreServiceDAOImpl extends JdbcQueryDAO implements StoreServiceDAO
     </service>
 
 </services>
+```
 
 ## Query XML
 
@@ -1744,7 +1746,7 @@ Query XML  작성 방법에 대하여 설명한다.
 
 ### (1) \<sqls>
 - Query XML 파일의 루트 노드이다. 속성(attribute) 들은 가지고 있지 않으며 하위에 \<statement> 노드와 \<resultMap> 노드를  갖는다.
-- 
+
 ### (2) \<statement>
 - 하나의 SQL 문장을 정의한다. 파일내에서 고유한 id 속성을 가져야한다.
 	- id : 프로그램내에서 SQL 문장을 가져오기 위하여 사용되는 ID 이다. 파일내에서 고유한 값을 가져야한다.
@@ -1802,6 +1804,7 @@ Query XML  작성 방법에 대하여 설명한다.
 		- \<iterate> 내에 작성된 SQL 문장에서는 property 속성의 컬럼 명칭이나 파라메터 명칭 다음에 [] 를 붙일 수 있으며 이때에는 해당 객체를 List 나 배열로 취급하여 값을 순서대로 꺼내어 binding 한다.
 	- 동적 SQL 내에서 property 대신 session 을 사용하면 parameter 가 아니라 세션에서 값을 참조한다.
 	- 예시) <isEmpty session="userid"> ...
+```
 
 **iterate 작성 예시**
 
@@ -1817,6 +1820,7 @@ Query XML  작성 방법에 대하여 설명한다.
            AND b.use_yn = 'Y'
          ORDER BY b.ord_no, b.prd_price
 </statement>
+```
 
 - Stored Procedure 호출
 	- Stored procedure 용 Query XML 작성시 파라메터는 반드시 #name:mode:type# 과 같은 형태로 정의해야한다.
@@ -1957,6 +1961,7 @@ format="###.###"/>
     </statement>
 
 </sqls>
+```
 
 - ColumnReader 의 매핑 순서는 다음과 같다.
 	- \<statement> 에 resultmap 이 지정되었을 경우 컬럼 데이터 조회 시 지정한 resultmap에 정의된 ColumnReader 매핑을 사용한다.
