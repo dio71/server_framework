@@ -644,7 +644,7 @@ Hot deploy 기능을 제공하는 ServiceContainer 의 구현 클래스이며 Xm
 
 다음은 실제 설정 예시이다.
 
-**service configuration**
+**service configuration(s2adapi-config.properties)**
 
 ```
 ####################################################################
@@ -662,3 +662,85 @@ s2adapi.container.s2adapi.service.config=s2adapi\_.*\\\\.xml
 # 참고) ${s2adapi.config.base.absolute} 는 이 설정 파일(s2adapi-config.properties)의 절대 경로를 담고 있다.
 ```
 
+# 3. Context
+
+### 1) ApplicationContext
+
+어플리케이션 실행 관련 정보를 제공하는 Context 객체이다. 다음의 메소드를 제공한다.
+
+- public String getApplicationName()
+	- 어플리케이션 명칭을 반환한다. Web Application 이 로딩되는 시점에 ServletContext 의 getServletContextName() 을 사용하여 설정되는 값이다.
+- public ServiceContainer getServiceContainer()
+	- 어플리케이션에 사용되는 ServiceContainer 객체를 반환한다.
+
+### 2) ServiceContext
+
+현재 처리 중인 서비스의 세션 정보를 제공하는 객체이며 현재 실행에 대한 ServiceContext 객체는 ContextManager.getServiceContext() 메소드를 사용하여 가져올 수 있다. 사용되는 세션 항목들을 프레임워크에서 따로
+정의한 것은 없으며 구현되는 시스템 내에서 필요한 세션 정보를 서비스 호출 시점에 설정하도록 기능을 구현해야한다. 세션으로 정의된 값은 이후 DAO 등의 서비스에서 Query 바인딩 파라메터로 사용할 수 있다.
+
+ServiceContext 가 제공하는 메소드들은 다음과 같다.
+- 패키지 명 : s2.adapi.framework.context.ServiceContext
+- public Object getRole(String key)
+	- key 에 해당하는 세션 값을 반환한다.
+- public void setRole(String key, Object role)
+	- key 에 해당되는 세션값으로 role 객체를 설정한다.
+- public void setRole(Map<? extends String,? extends Object> roleMap)
+	- Map 객체에 담겨진 항목들을 모두 세션 값으로 설정한다.
+- public boolean isDebugingMode()
+	- 현재 실행이 디버깅 모드인지 여부를 반환한다. 업무 로직 개발시 디버깅 상태에 따라 분기하기 위한 기능을 제공하는 용도이다.
+
+-   public void setDebugingMode(boolean debuging)
+	- 현재 실행을 디버깅 모드로 설정하거나 리셋한다.
+
+### 3) DiagnosticContext
+
+하나의 서비스를 처리할 때 내부 주요 시점에서의 성능 정보나 모니터링 정보를 확인하기 위하여 사용된다. 아래의 ContextAwareService의 getDiagnosticContext() 메소드를 통하여 받아 올 수 있으며 Map 객체로 관리된다. 저장되는 정보는 임의의 값이며 해당 시스템 내에서 표준을 정하여 사용하면된다. 프레임워크 내에서 사용되는 항목들은 다음과 같다.
+
+- diag.web.action.uri : 호출된 HttpServletRequest의 URI 값
+- diag.web.action.target : 호출되는 서비스 명
+- diag.web.action.method : 호출되는 메소드 명
+- diag.web.action.stime : 서비스 실행 시작시간
+- diag.web.action.etime : 서비스 실행 종료시간
+- diag.web.action.rtime : 서비스 실행시간
+- diag.web.action.svc.errmsg : 서비스 오류 발생시 오류 메시지
+- diag.web.action.retcount : 서비스 정상 실행시 반환되는 결과의 row 수 (반환 결과가 ValueObject 인 경우)
+
+### 4) ContextAwareService
+
+상속을 통하여 서비스의 세션정보를 알려주거나 트랜젝션 관련 기능을 제공한다. 이 클래스를 상속한 구현 클래스는 아래의 메소드를 사용할 수 있다.
+
+- 패키지 명 : s2.adapi.framework.context.ContextAwareService
+- protected ServiceContext getServiceContext()
+	- 현재 처리중인 서비스의 ServiceContext 객체를 반환한다.
+- protected Map<String,Object> getDiagnosticContext()
+	- 현재 처리중인 서비스의 DiagnosticContext 정보를 Map 객체로 반환한다.
+- protected ApplicationContext getApplicationContext()
+	- 현재 처리중인 서비스의 ApplicationContext 객체를 반환한다.
+- protected void setRollbackOnly() throws IllegalStateException
+	- 현재 처리중인 서비스의 트랜젝션을 Rollback 상태로 마킹한다.
+	- Rollback 상태로 마킹된 서비스는 서비스 실행이 완료되는 시점에 rollback 처리된다.
+
+### 5) ContextManager
+
+ServiceContext, DiagnosticContext 그리고 트랜젝션 상태정보를 관리하는 클래스이다. 위에서 설명한 ContextAwareService 의 메소드들도 모두 ContextManager 의 기능을 통하여 제공된다. ContextManager 에서 제공하는 정보는 모두 ThreadLocal 변수로 관리되며 아래의 메소드들을 제공한다. 제공되는 메소드들은 모두 static 메소드이다.
+
+- public static int getContextType()
+	- 현재 실행 중인 환경이 Web Application (0) 인지 일반 Java Application (1) 인지 반환한다.
+- public static void setServiceContext(ServiceContext svcCtx)
+	- ServiceContext 객체를 현재 쓰레드에 설정한다.
+-  public static ServiceContext getServiceContext()
+	- 현재 쓰레드에 설정된 ServiceContext 객체를 반환한다.
+- public static void clearServiceContext()
+	- 현재 쓰레드에 설정된 ServiceContext 객체를 삭제한다.
+- public static Map<String,Object> getDiagnosticContext()
+	- 현재 쓰레드에 설정된 DiagnosticContext 정보를 Map 객체로 반환한다.
+- public static void clearDiagnosticContext()
+	- 현재 쓰레드에 설정된 DiagnosticContext 정보를 삭제한다.
+- public static void setDebugingMode(boolean debuging)
+	- 현재 쓰레드를 디버깅 모드로 설정하거나 (true) 리셋한다. (false)
+- public static boolean isDebugingMode()
+	- 현재 쓰레드의 설정된 디버깅 모드 값을 반환한다.
+- public static void setRollbackOnly()
+	- 현재 쓰레드에 할당된 트랙젝션을 rollback 상태로 마킹한다.
+- public static void clearAll()
+	- 현재 쓰레드에 할당된 ServiceContext 객체와 DiagnosticContext 객체를 모두 삭제한다.
