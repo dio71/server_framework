@@ -1512,7 +1512,7 @@ XML 파일로 작성된 SQL 문을 실행시키는 기능을 제공하는 DAO이
                LEFT JOIN str_pcatlangs c ON b.cat_cd = c.cat_cd AND c.lang_cd = #lang_cd#
          WHERE a.app_id = #%appid#
            AND a.cat_cd = b.cat_cd
-           AND b.use_yn = 'Y\'
+           AND b.use_yn = 'Y'
          ORDER BY a.seq_no
     </statement>
 
@@ -1524,34 +1524,34 @@ XML 파일로 작성된 SQL 문을 실행시키는 기능을 제공하는 DAO이
 
     <statement id="getProductListOfCategories">
         SELECT b.prd_cd, b.cat_cd, b.tr_type, 
-CAST(b.prd_price * #pnt_rate# AS NUMERIC(15,2)) as pnt_amt, b.updt_dt,
-COALESCE(c.corp_nm, b.corp_nm) as corp_nm,
-COALESCE(c.prd_nm, b.prd_nm) as prd_nm
+               CAST(b.prd_price * #pnt_rate# AS NUMERIC(15,2)) as pnt_amt, b.updt_dt,
+               COALESCE(c.corp_nm, b.corp_nm) as corp_nm,
+               COALESCE(c.prd_nm, b.prd_nm) as prd_nm
           FROM str_prdapps a, str_products b LEFT JOIN str_prdlangs c ON b.prd_cd = c.prd_cd AND c.lang_cd = #lang_cd#
          WHERE a.app_id = #%appid#
            AND a.prd_cd = b.prd_cd
-         <isNotEmpty property="cat_cd">
-           AND b.cat_cd IN <iterate property="cat_cd" open="("
-close=")" conjunction=",">#cat_cd[]#</iterate>
-         </isNotEmpty>
-         <isEmpty property="cat_cd">
+        <isNotEmpty property="cat_cd">
+           AND b.cat_cd IN <iterate property="cat_cd" open="(" close=")" conjunction=",">#cat_cd[]#</iterate>
+        </isNotEmpty>
+        <isEmpty property="cat_cd">
            AND b.cat_cd = 0
-         </isEmpty>
-           AND b.use_yn = \'Y\'
+        </isEmpty>
+           AND b.use_yn = 'Y'
          ORDER BY b.ord_no, b.prd_price
     </statement>
 
     <statement id="getProductList">
-        SELECT b.prd_cd, b.cat_cd, b.tr_type, CAST(b.prd_price * #pnt_rate# AS NUMERIC(15,2)) as pnt_amt, b.updt_dt,
- COALESCE(c.corp_nm, b.corp_nm) as corp_nm,
-COALESCE(c.prd_nm, b.prd_nm) as prd_nm
+        SELECT b.prd_cd, b.cat_cd, b.tr_type, b.updt_dt,
+               CAST(b.prd_price * #pnt_rate# AS NUMERIC(15,2)) as pnt_amt, 
+               COALESCE(c.corp_nm, b.corp_nm) as corp_nm,
+               COALESCE(c.prd_nm, b.prd_nm) as prd_nm
           FROM str_prdapps a, str_products b LEFT JOIN str_prdlangs c ON b.prd_cd = c.prd_cd AND c.lang_cd = #lang_cd#
          WHERE a.app_id = #%appid#
            AND a.prd_cd = b.prd_cd
-       <isNotEmpty property="cat_cd">
+        <isNotEmpty property="cat_cd">
            AND b.cat_cd = #cat_cd# 
-       </isNotEmpty>
-           AND b.use_yn = \'Y\'
+        </isNotEmpty>
+           AND b.use_yn = 'Y'
          ORDER BY b.ord_no, b.prd_price
     </statement>
 </sqls>
