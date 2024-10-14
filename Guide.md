@@ -1761,7 +1761,7 @@ Query XML  작성 방법에 대하여 설명한다.
 		- 파라메터 명칭이다. 
 		- 런타임에 Query 실행시 전달되는 ValueObject 에서 값을 가져오기 위하여 사용된다.
 		- name 앞에 % 가 붙으면 실행 중인 서비스의 컨텍스트 정보로부터 name에 해당되는 값을 가져온다. (일반적으로 현재 세션 정보와 바인딩된다.)
-		- name 뒤에 [] 가 붙으면 해당 값은 List 나 배열로 처리되어야 함을 의미한다. 이것은 <iterate> 내에서 사용된다.
+		- name 뒤에 \[] 가 붙으면 해당 값은 List 나 배열로 처리되어야 함을 의미한다. 이것은 \<iterate> 내에서 사용된다.
 	- mode 
 		- IN, OUT, INOUT 중 하나를 지정한다. 생략하면 디폴트로 IN 으로 지정된다. 
 		- Stored Procedure 호출 시에만 사용되는 기능이다.
@@ -1771,7 +1771,7 @@ Query XML  작성 방법에 대하여 설명한다.
 		- Stored Procedure 호출 시에만 사용되지만 DATE, TIME, TIMESTAMP 의 경우는 일반 SQL 내에서도 사용할 수 있다.
 	- format
 		- type 이 DATE, TIME, TIMESTAMP 의 경우에는 타입변환을 위하여 실제 파라메터의 포멧 문자열을 지정할 수 있다.
-		- format 지정은 [java.text.SimpleDateFormat] 에서 정의하는 포멧 문자열을 사용한다.
+		- format 지정은 \[java.text.SimpleDateFormat] 에서 정의하는 포멧 문자열을 사용한다.
 		- DATE type 은 format 이 지정되지 않으면 디폴트로 \'yyyyMMdd\' 가 사용된다.
 		- TIME type은 format 이 지정되지 않으면 디폴트로 \'HHmmss\' 가 사용된다.
 		- TIMESTAMP type은 format 이 지정되지 않으면 디폴트로 \'yyyyMMddHHmmssSSS\' 가 사용된다.
@@ -1946,14 +1946,14 @@ public ValueObjectAssembler testSPOra(ValueObject pVO) throws SqlQueryException 
 <sqls>
     <resultMap id="map1">
         <result column="a"
-reader="s2.adapi.framework.dao.reader.FormattedDateColumnReader"
-format="yyyyMMdd"/>
+                reader="s2.adapi.framework.dao.reader.FormattedDateColumnReader"
+                format="yyyyMMdd"/>
         <result column="b"
-reader="s2.adapi.framework.dao.reader.FormattedTimeColumnReader"
-format="HHmmss"/>
+                reader="s2.adapi.framework.dao.reader.FormattedTimeColumnReader"
+                format="HHmmss"/>
         <result type="DOUBLE"
-reader="s2.adapi.framework.dao.reader.FormattedNumberColumnReader"
-format="###.###"/>
+                reader="s2.adapi.framework.dao.reader.FormattedNumberColumnReader"
+                format="###.###"/>
     </resultMap>
 
     <statement id="mapTest" resultMap="map1">
