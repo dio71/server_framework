@@ -1347,7 +1347,7 @@ JdbcDAO 가 제공하는 메소드들은 다음과 같다.
 	- columnNames : 반환받을 컬럼의 명칭을 지정한다.
 	- 나머지는 위 메소드와 동일하다.
 
-### (4) SELECT
+### (4) SELECT 문
 
 - protected ValueObject executeQuery(Connection con, String sql, List<Object> param[, ResultMap rmap]) throws SqlQueryException
 - protected ValueObject executeQuery(Connection con, String sql, List<Object> param, ValueObject pageVO[, ResultMap rmap]) throws SqlQueryException
