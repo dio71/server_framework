@@ -1440,8 +1440,8 @@ public interface ColumnReader {
 - DB2XmlColumnReader : 컬럼값을 com.ibm.db2.jcc.DB2Xml 으로 읽어와서 String으로 반환한다.
 - ObjectColumnReader : 컬럼값을 Object로 읽어와서 java.lang.Object 객체로 반환한다.
 
-### (2) 디폴트 ColumnReader (PostgreSQL, MySql, SqlServer, Sybase
-포함)![](vertopal_b378c48198ea424d858d505c4b800e25/media/image1.png)
+### (2) 디폴트 ColumnReader (PostgreSQL, MySql, SqlServer, Sybase 포함)
+![](vertopal_b378c48198ea424d858d505c4b800e25/media/image1.png)
 
 ### (3) Oracle 기본
 ColumnReader![](vertopal_b378c48198ea424d858d505c4b800e25/media/image2.png)
