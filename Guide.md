@@ -1324,7 +1324,18 @@ JdbcDAO 가 제공하는 메소드들은 다음과 같다.
 - protected void close(Connection con) throws SqlQueryException : Connection 객체를 close 한다.
 - protected void close(Connection con, PreparedStatement ps, ResultSet rs) throws SqlQueryException : Connection 객체와 PreparedStatement 객체 그리고 ResultSet 객체를 한번에 close 한다.
 
-### (3) INSERT, UPDATE, DELETE
+### (3) SELECT 문
+
+- protected ValueObject executeQuery(Connection con, String sql, List<Object> param\[, ResultMap rmap]) throws SqlQueryException
+- protected ValueObject executeQuery(Connection con, String sql, List<Object> param, ValueObject pageVO\[, ResultMap rmap]) throws SqlQueryException
+	- Select 조회 SQL 을 수행한다.
+	- sql : PreparedStatement 생성을 위한 SQL 문장
+	- params : ? 파라메터에 매핑될 값들을 순서대로 담은 List 객체
+	- pageVO : 페이지단위의 조회를 실행하고자 할 경우 페이지 정보를 담아서 전달한다.
+	- ResultMap 은 DB에서 컬럼의 값을 읽어올때 어떤 ColumnReader 를 사용하여 값을 읽어 올지 지정하는 용도로 사용된다.
+	- Return : 조회된 값들을 ValueObject 에 담아서 반환한다. 조회된 결과가 없는 경우에는 비어있는 ValueObject 객체를 반환한다.
+
+### (4) INSERT, UPDATE, DELETE
 
 - protected int executeUpdate(Connection con, String sql, List<Object> param) throws SqlQueryException
 	- Insert, update, delete SQL 문을 실행한다. 
@@ -1346,17 +1357,6 @@ JdbcDAO 가 제공하는 메소드들은 다음과 같다.
 	- Insert SQL을 실행하며 실행결과로 테이블에 입력된 값을 다시 반환받기 위하여 사용된다.
 	- columnNames : 반환받을 컬럼의 명칭을 지정한다.
 	- 나머지는 위 메소드와 동일하다.
-
-### (4) SELECT 문
-
-- protected ValueObject executeQuery(Connection con, String sql, List<Object> param\[, ResultMap rmap]) throws SqlQueryException
-- protected ValueObject executeQuery(Connection con, String sql, List<Object> param, ValueObject pageVO\[, ResultMap rmap]) throws SqlQueryException
-	- Select 조회 SQL 을 수행한다.
-	- sql : PreparedStatement 생성을 위한 SQL 문장
-	- params : ? 파라메터에 매핑될 값들을 순서대로 담은 List 객체
-	- pageVO : 페이지단위의 조회를 실행하고자 할 경우 페이지 정보를 담아서 전달한다.
-	- ResultMap 은 DB에서 컬럼의 값을 읽어올때 어떤 ColumnReader 를 사용하여 값을 읽어 올지 지정하는 용도로 사용된다.
-	- Return : 조회된 값들을 ValueObject 에 담아서 반환한다. 조회된 결과가 없는 경우에는 비어있는 ValueObject 객체를 반환한다.
 
 ### (5) Batch SQL
 
