@@ -33,16 +33,14 @@
 
 # 1. ValueObject
 
-ValueObject 는 S2API Framework의 내부뿐만 아니라 외부 클라이언트(Android/iOS Client)와의 데이터 통신시 사용되는Data Transfer Object(DTO) 이다. 
+ValueObject 는 S2API Framework의 내부뿐만 아니라 외부 클라이언트(Android/iOS Client)와의 데이터 통신시 사용되는Data Transfer Object(DTO) 이다. ValueObject 는 다음과 같은 특징을 갖는다.
 
-ValueObject 는 다음과 같은 특징을 갖는다.
-
--   정적인 필드가 아닌 동적인 필드 구성 방식이다. (Map-based DTO)
+- 정적인 필드가 아닌 동적인 필드 구성 방식이다. (Map-based DTO)
 	- 여러 컬럼으로 구성된 레코드들을 리스트 형식으로 저장한다. (List of Map)
 	- 저장된 데이터의 컬럼 정보를 별도로 가지고 있지 않다. 즉 각 row 별로 컬럼 구성이 다를 수 있다.
 	- DB의 Table 데이터를 저장하기에 적합한 구조이다.
 
--   명명 규칙 : ValueObject 타입의 변수는 반드시 VO 로 끝나도록 명명한다.
+- 명명 규칙 : ValueObject 타입의 변수는 반드시 VO 로 끝나도록 명명한다.
 	- 예시) retVO, reqVO, advVO, pubVO, paramVO 등
 
 ### (1) 클래스 선언부
