@@ -2882,3 +2882,70 @@ public class ExternalEventWebActionRestImpl extends RestfulMultiWebAction implem
 - payload\[1] = "1234"
 - payload\[2] = "5678" 이 담겨지게 된다.
 
+# 7. Transaction
+
+트랜젝션 처리를 위하여 프레임워크에서는 Transaction 클래스를 제공한다. 제공되는 Transaction 클래스는 아래와 같은 특징이 있다.
+
+- 프레임워크가 제공하는 DAO 클래스와 DataSource 클래스와 함께 사용해야 한다.
+- Thread 당 동시에 하나의 트랜젝션만 처리가능하며, 여러 Thread 에 걸친 트랜젝션은 지원하지 않는다.
+- 동시에 여러 DataSource 를 commit() 할 수 있으나, 2 Phase commit 기능은 제공하지 않는다. DataSource 별로 별도 commit() 처리된다.
+- 트랜젝션 내부의 상태는 STATE_INACTIVE 와 STATE_ACTIVE 2개의 상태로 관리되며 트랜젝션이 시작(begin)되면 STATE_ACTIVE, 트랜젝션이 종료(end), 커밋(commit), 롤백(rollback)되면 STATE_INACTIVE 상태로 전이된다.
+
+Transaction 클래스가 제공하는 메소드는 아래와 같다.
+
+- public static Transaction current()
+	- 현재 Thread 에 연결된 Transaction 객체를 반환한다.
+- public void begin()
+	- 트랜젝션을 시작하고 상태 값을 STATE_ACTIVE 로 변경한다.
+- public void end() throws SQLException
+	- 트랜젝션을 종료하고 상태 값을 STATE_INACTIVE로 변경한다. 현재 트랜젝션이 rolbackonly 로 마킹되어 있다면 rollback() 을 수행하고 아니라면 commit() 을 수행한다.
+- public void commit() throws SQLException
+	- 트랜젝션을 commit() 처리하고 상태 값을 STATE_INACTIVE로 변경한다. 직접적으로 호출하는 것보다 end() 를 호출하는 것이 바람직하다.
+- public void rollback() throws SQLException
+	- 트랜젝션을 rollback() 처리하고 상태 값을 STATE_INACTIVE로 변경한다. 직접적으로 호출하는 것보다 rollback 으로 마킹 후 end() 를 호출하는 것이 바람직하다.
+- public void setRollbackOnly()
+	- 현재 트랜젝션을 rollback 으로 마킹한다.
+-   public boolean isActive()
+	- 현재 트랜젝션이 STATE_ACTIVE 인 경우 true 를 반환한다.
+
+Transaction 을 사용한 개발 예시는 다음과 같다.
+
+**Transaction 적용 예시**
+
+```java
+public class WebActionDispatcher extends s2.adapi.framework.web.action.WebActionDispatcher {
+
+    protected void preProcess(HttpServletRequest request, HttpServletResponse response) 
+    {
+
+        Object userId = ContextManager.getServiceContext().getRole("login_id");
+
+        if (userId != null ) {
+            MDC.put("userid", userId);
+        }
+
+        MDC.put("sid", idgen.getNextId(this).toString());
+        MDC.put("ipaddr", StringHelper.null2void(request.getRemoteAddr()));
+
+        Transaction.current().begin();
+    }
+
+    protected void postProcess(HttpServletRequest request, HttpServletResponse response, WebActionForward forward) 
+    {
+
+        try {
+
+            if (Transaction.current().isActive()) {
+                Transaction.current().end();
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        logDiagnostics(null);
+        ContextManager.clearAll();
+    }
+
+}
+```
