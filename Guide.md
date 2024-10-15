@@ -1970,3 +1970,919 @@ public ValueObjectAssembler testSPOra(ValueObject pVO) throws SqlQueryException 
 	- \<resultMap> 에 column 명으로 정의된 ColumnReader 매핑이 없으면 type으로 정의된 것을 적용한다.
 	- \<resultMap>에 column 명과 type으로 정의된 ColumnReader 매핑이 모두 없으면 Global ResultMap에 정의된 것을 적용한다. (JdbcDAO 참조)
 	- Global ResultMap에도 정의되지 않았다면 DBMS 별로 디폴트로 정의된 ColumnReader를 사용한다. (JdbcDAO 참조)
+
+## 3) SqlQueryDAO
+
+JdbcDAO 나 JdbcQueryDAO를 사용하기 위해서는 이를 상속받은 업무별 DAO 클래스를 생성하여 내부에 Query 실행 및 관련 로직을 구현해야한다. 그러나 대부분 DAO 에서는 Query 실행만 시키는 방식으로 구현이 되므로 업무별로 DAO 클래스를 작성하는 것은 비효율적인 개발이되기 쉽다.
+
+SqlQueryDAO는 업무별 DAO 클래스를 작성하지 않고 실행할 Query XML 파일만 작성하여 이를 비지니스 로직에서 바로 호출할 수 있도록 만들어진 DAO 클래스이다. Query XML  파일을 작성하는 것은 JdbcQueryDAO 와 동일하며 프로그램내에서는 SqlQueryDAO 를 생성하여 바로 사용한다.
+
+다음은 SqlQueryDAO 의 사용방법을 보여주기 위한 간단한 예시이다.
+
+**SqlQueryDAO 예시**
+
+```java
+package test.business;
+
+import s2.adapi.framework.dao.SqlQueryDAO;
+import s2.adapi.framework.vo.ValueObject;
+
+public class CommonCodeManagerImpl implements CommonCodeManager {
+
+    private SqlQueryDAO dao = null;
+
+    public CommonCodeManagerImpl() {
+
+        // 기본 Datasource를 사용하는 DAO 를 생성한다. a
+        // 실제 사용시에는 직접 생성하지 않고 ServiceContainer 에서 injection을 통하여 받아온다.
+        dao = new SqlQueryDAO();
+        dao.setSql("test/business/sqls/commoncodedao_sqls.xml");
+    }
+
+    @Override
+    public ValueObject getCodeList(ValueObject paramVO) {
+
+        // 비즈니스 메소드에서 바로 SqlQueryDAO를 사용한다.
+        ValueObject getVO = dao.executeQuery("getCodeList", paramVO);
+
+        // ...
+
+        return getVO;
+    }
+}
+```
+
+SqlQueryDAO 에서 제공하는 메소드 들은 다음과 같다. Query 를 실행하는 execute~() 형태의 메소드들은 JdbcQueryDAO의 그것과 동일한 의미이다. 다만 SqlQueryDAO 에서는 실행할 Query의 statement ID 값이 첫번째 파라메터로 전달된다는 점이 다르다.
+
+- 생성자
+	- public SqlQueryDAO()
+	- public SqlQueryDAO(Object parent)
+	- public SqlQueryDAO(String sqlpath, Object parent)
+	- public SqlQueryDAO(String sqlpath)
+	- public SqlQueryDAO(DataSource ds, Object parent)
+	- public SqlQueryDAO(DataSource ds)
+	- public SqlQueryDAO(DataSource ds, String sqlpath, Object parent)
+	- public SqlQueryDAO(DataSource ds, String sqlpath)
+		- parent : 이 DAO 를 사용하는 객체를 지정한다. parent 객체의 classpath 로부터 Query XML 파일을 찾는다.
+		- sqlPath : Query XML 파일의 경로이다. parent 로 설정된 객체의 classpath 로부터의 상대 경로이다.
+		- ds : DB connection 을 위하여 사용되는 DataSource 객체이다.
+- Setter 메소드
+	- public void setParent(Object parent)
+	- public void setSql(String path)
+- INSERT, UPDATE, DELETE
+	- public int executeUpdate(String queryname, ValueObject paramVO) throws SqlQueryException
+	- public ValueObject executeUpdateReturnKeys(String queryname, ValueObject paramVO, int numKeyCols) throws SqlQueryException
+	- public ValueObject executeUpdateReturnKeys(String queryname, ValueObject paramVO, int[] columnIndexes) throws SqlQueryException
+	- public ValueObject executeUpdateReturnKeys(String queryname, ValueObject paramVO, String[] columnNames) throws SqlQueryException
+- SELECT
+	- public ValueObject executeQuery(String queryname, ValueObject paramVO) throws SqlQueryException
+	- public ValueObject executeQuery(String queryname, ValueObject paramVO, ValueObject pageVO) throws SqlQueryException
+- Batch SQL
+	- public int[] executeBatch(String queryname, ValueObject paramVO) throws SqlQueryException
+- Stored procecedure 호출
+	- public ValueObject executeCall(String queryname, ValueObject paramVO) throws SqlQueryException 
+	- public ValueObjectAssembler executeCall(String queryname, ValueObject paramVO, String[] rsNames) throws SqlQueryException
+
+ SqlQueryDAO를 이용한 개발 예제는 아래와 같다.
+
+**Query XML 파일 작성**
+
+```xml
+<?xml version='1.0' encoding='utf-8'?>
+<sqls>
+    <statement id="getCategoryList">
+        SELECT a.cat_cd, COALESCE(c.cat_nm, b.cat_nm) as cat_nm, b.updt_dt 
+          FROM str_pcatapps a, str_prdcats b 
+               LEFT JOIN str_pcatlangs c ON b.cat_cd = c.cat_cd AND c.lang_cd = #lang_cd#
+         WHERE a.app_id = #%appid#
+           AND a.cat_cd = b.cat_cd
+           AND b.use_yn = 'Y'
+         ORDER BY a.seq_no
+    </statement>
+</sqls>
+```
+
+**서비스 설정 파일에 정의**
+
+```xml
+<services module="store" package="s2.adapi.app.service.store" pre-init="false">
+
+    <service name="StoreServiceDAO"
+             class="s2.adapi.framework.dao.SqlQueryDAO"
+             singleton="true">
+        <property name="datasource" ref="jdbc.apidb"/>
+        <property name="sql" value="sqls/store_service_sqls.xml"/>
+    </service>
+
+    <service name="StoreService"
+             interface="${package}.StoreService"
+             class="${package}.StoreServiceImpl"
+             singleton="true">
+        <property name="dao" ref="StoreServiceDAO"/>
+    </service>
+</services>
+```
+
+**Java 에서 사용하기**
+
+```java
+public class StoreServiceImpl implements StoreService {
+
+    private SqlQueryDAO storeDAO = null;
+    public void setDao(SqlQueryDAO dao) {
+        storeDAO = dao;
+    }
+
+    @Override
+    public ValueObject getCategoryList(String langCode) {
+
+        ValueObject paramVO = new ValueObject();
+        paramVO.set(Constant.Columns.LANG_CD, langCode);
+
+        ValueObject retVO = storeDAO.executeQuery("getCategoryList", paramVO);
+
+        return retVO;
+    }
+}
+```
+
+# 6. Web Application
+
+MVC Model 구조의 Web Application 개발을 위하여 아래의 클래스들이 제공된다.
+
+- WebActionDispatcher
+	- HTTP Request 를 ServiceContainer 가 관리하는 WebAction 구현 서비스로 전달하는 구조를 제공한다.
+	- HTTP Request URL 상에 호출할 WebAction 서비스의 명칭을 명시해야한다.
+	- MVC Model 의 Controller 에 해당되며 HttpServlet 으로 구현된다.
+- WebAction 서비스
+	- HTTP Request 를 처리하기 위한 로직을 구현하며 ServiceContainer 에 서비스로 등록된다.
+	- WebAction 또는 WebMultiAction interface 를 구현한다.
+- WebActionForward
+	- WebAction 서비스 내에서 처리된 결과를 JSP 등에 보내기 위하여 사용되는 DTO 클래스이다.
+	- 내부에 Forward 될 URL 정보와 결과 데이터를 저장한다.
+
+## 1) WebActionDispatcher
+
+Web Framework의 MVC 아키텍처 구현을 위한 Controller 클래스로서, HttpServletRequest를 받아서 해당 WebAction 객체로 전달해주는 역활을 수행한다. 이 Servlet이 동작하기 위해서는 항상 ServiceContainer 객체가 필요한데, 이것은 WebApplicationContextLoader 통하여 Servlet 컨테이너가 초기화되는 시점에 생성된다. 
+
+WebApplicationContextLoader 는 Servlet 컨테이너가 초기화되는 시점과 Servlet 컨테이너가 중지되는 시점에 호출되는 ServletContextListener의 구현 클래스이다. WebActionDispatcher 가 생성되는 시점에 ServletContext 내에 WebApplicatinContext 객체를 생성하여 담아 놓는다. WebApplicationContext는 WebAction 구현 클래스에서 접근이 가능하며 서비스 객체를 가져오기 위한 ServiceContainer 객체를 제공한다. WebApplicationContextLoader 는 web.xml 파일 내에 아래와 같이 \<listener> 를 설정하여야 한다. \<listener>는 web.xml 내에서 \<filter-mapping>와 \<servlet> 사이에 위치한다.
+
+```xml
+    <listener>
+      <listener-class>s2.adapi.framework.web.action.WebApplicationContextLoader</listener-class>
+    </listener> 
+```
+
+프로그램 개발시에는 프레임워크에서 제공하는 s2.adapi.web.action.WebActionDispatcher 를 그대로 사용하거나 또는
+상속받아 기능을 추가하여 사용할 수 있다. 기능 추가시에는 postProcess(), preProcess() 메소드를 override 한다.
+
+**WebActionDispatcher**
+
+```java
+public class WebActionDispatcher extends HttpServlet {
+
+    /**
+     * WebAction의 execute()나 WebMultiAction()의 method 호출 전에 처리할
+     * 전처리 로직을 구현한다.
+     * @return
+     */
+    protected void preProcess(HttpServletRequest request,
+            HttpServletResponse response) throws Throwable {
+
+    }
+
+    /**
+     * WebAction의 execute()나 WebMultiAction()의 method 호출이
+     * 정상 처리되었을 경우의 후처리 로직을 구현한다.
+     * @param request
+     * @param response
+     * @param forward
+     */
+    protected void postProcess(HttpServletRequest request,
+            HttpServletResponse response, WebActionForward forward) {
+
+    }
+
+    /**
+     * WebAction의 execute()나 WebMultiAction()의 method 호출 시 Exception 발생하였을 경우의 후처리 로직이다.
+     * 전달된 Exception에 맞는 처리를 한 후 Exception을 다시 던지거나 에러 처리용 WebActionForward를 리턴하는 방식으로 구현한다.
+     * @param request
+     * @param response
+     * @param exeception
+     * @return WebActionForward
+     */
+    protected WebActionForward postProcess(HttpServletRequest request,
+            HttpServletResponse response, Throwable thr) throws Throwable {
+        throw thr;
+
+    }
+
+   // ...
+
+}
+```
+
+아래는 실제 개발 예시이다.
+
+**WebActionDispatcher 커스터마이징 예시**
+
+```java
+package s2.adapi.server.s2adapi;
+
+import java.sql.SQLException;
+import java.util.Map;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.log4j.MDC;
+
+import s2.adapi.framework.context.ContextManager;
+import s2.adapi.framework.dao.sql.Transaction;
+import s2.adapi.framework.exception.ApplicationException;
+import s2.adapi.framework.util.StringHelper;
+import s2.adapi.framework.web.action.WebActionForward;
+
+public class WebActionDispatcher extends s2.adapi.framework.web.action.WebActionDispatcher {
+
+    protected void preProcess(HttpServletRequest request, HttpServletResponse response) 
+    {
+
+        Object userId = ContextManager.getServiceContext().getRole("login_id");
+
+        if (userId != null ) {
+            MDC.put("userid", userId);
+        }
+
+        MDC.put("sid", idgen.getNextId(this).toString());
+        MDC.put("ipaddr", StringHelper.null2void(request.getRemoteAddr()));
+
+        Transaction.current().begin();
+    }
+
+    /**
+     * ServiceContext 정보를 클리어한다.
+     */
+
+    protected void postProcess(HttpServletRequest request, HttpServletResponse response, 
+WebActionForward forward) 
+    {
+
+        try {
+            if (Transaction.current().isActive()) {
+                Transaction.current().end();
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        logDiagnostics(null);
+        ContextManager.clearAll();
+    }
+
+    /**
+     * ServiceContext 정보를 클리어한다.
+     */
+
+    protected WebActionForward postProcess(HttpServletRequest request, HttpServletResponse response, Throwable thr) throws Throwable {
+
+        try {
+            if (Transaction.current().isActive()) {
+                Transaction.current().end();
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        logDiagnostics(thr);
+        ContextManager.clearAll();
+
+        throw thr;
+    }
+
+    private void logDiagnostics(Throwable thr) {
+
+        Map<String,Object> diagMap = ContextManager.getDiagnosticContext();
+
+        // 성능 로깅을 남긴다. 
+
+        // ...
+    }
+}
+```
+
+**web.xml 예시**
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE web-app PUBLIC "-//Sun Microsystems, Inc.//DTD Web Application 2.3//EN" "http://java.sun.com/dtd/web-app_2\_3.dtd">
+
+<web-app id="s2adapi">
+
+    <display-name>s2adapi</display-name>
+    <description>This is S2adapi Web Application.</description>
+
+    <listener>
+      <listener-class>s2.adapi.framework.web.action.WebApplicationContextLoader</listener-class>
+    </listener>
+
+    <servlet>
+      <servlet-name>dispatcher</servlet-name>
+      <servlet-class>s2.adapi.server.s2adapi.WebActionDispatcher</servlet-class>
+    </servlet>
+
+    <servlet-mapping>
+      <servlet-name>dispatcher</servlet-name>
+      <url-pattern>*.ad</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+      <servlet-name>dispatcher</servlet-name>
+      <url-pattern>*.main</url-pattern>
+    </servlet-mapping>
+
+    <resource-ref>
+      <description>apidb</description>
+      <res-ref-name>jdbc/apidb</res-ref-name>
+      <res-type>javax.sql.DataSource</res-type>
+      <res-auth>Container</res-auth>
+    </resource-ref>
+
+</web-app>
+```
+
+## 2) WebAction
+
+HTTP Request 를 받아서 로직을 처리하고자 할 경우에는 반드시 WebAction interface 를 구현해야한다. WebActionDispatcher 는 request URI 내에서 서비스 명을 얻어와 대상 서비스 객체의  execute() 메소드를 호출한다. 아래는 WebAction interface 이다.
+
+```java
+package s2.adapi.framework.web.action;
+
+import java.io.IOException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+public interface WebAction {
+
+    /**
+     * WebActionDispatcher 서블릿이 호출하는 메소드이다.
+     * 이 인터페이스를 구현하는 클래스는 이 메소드에서 업무처리를 수행하고 forward할 View의 URL을
+     * WebActionForward로 리턴한다. null을 리턴할 경우에는 forward하지 않는다.
+     * @param request
+     * @param response
+     * @return
+     * @throws Exception
+     */
+    public WebActionForward execute(HttpServletRequest request, HttpServletResponse response) throws Exception;
+
+    /**
+
+     * WebAction의 설정값을 출력하는 메소드이다.
+     * @param request
+     * @param response
+     * @throws Exception
+     */
+    public void showConfiguration(HttpServletResponse response) throws IOException;
+
+    /**
+
+     * WebAction 객체를 실행하는 WebActionDispatcher 에서 자신의 WebApplicationtContext 값을 전달한다.
+     * 처음 WebAction 객체가 생성될 때 호출된다.
+     * @param ctx
+     */
+    public void setWebApplicationContext(WebApplicationContext ctx);
+
+}
+
+WebAction 의 처리 흐름은 아래 그림과 같다.
+
+그림
+
+
+### (1) WebActionForward
+
+WebActionForward 는 WebAction에서 리턴되는 객체이며 이후 이동할 화면(JSP 등)의 URL 과 전달할 데이터를 가진다. WebActionForward 객체를 생성할 때에는 생성자를 통하여 생성하지않고 AbstractWebAction 클래스에서 제공하는 public WebActionForward createForward(String name) 메소드를 이용하는 것이 일반적이다.
+
+전달할 데이터는 addModel() 메소드를 이용하여 설정하며 이 데이터는 request.getAttribute(modelName) 을 사용하여 접근이 가능하다.
+
+아래는 WebActionForward 가 제공하는 메소드이다.
+
+- 생성자
+	- public WebActionForward(String name, String url)
+	- public WebActionForward(String name, String url, boolean forward)
+		- forward : true 이면 forward 방식, false 이면 redirect 방식으로 이동
+- 모델 데이터
+	- public WebActionForward addModel(String modelName, Object modelData)
+	- public WebActionForward addModel(ValueObjectAssembler vos)
+	- public Object getModel(String modelName)
+	- public Set<String> getModelNames()
+- Forward URL
+	- public String getViewURL()
+	- public String getViewName()
+	- public boolean isForward()
+	- public void sendView(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException
+		- 설정된 view의 url 로 forward 또는 redirect 한다.
+
+### (2) AbstractWebAction 및 WebAction 구현 절차
+
+AbstractWebAction 클래스는 WebAction 서비스를 쉽게 구현할 수 있도록 WebActionForward 관련된 편의 기능들을 제공하고 showConfiguration() 과 setApplicationContext() 메소드를 구현해놓았다. AbstractWebAction 클래스에서 제공하는 메소드들은 다음과 같다. 
+
+- protected ValueObject getRequestParamAsVO(HttpServletRequest request)
+	- GET 으로 전달된 파라메터들을 ValueObject 객체에 담아서 반환한다. 동일한 명칭의 값이 여러개인 경우 row 를 추가하여 ValueObject에 저장된다.
+- protected ValueObject getAttachFileAsVO(HttpServletRequest request, String name)
+- 첨부파일이 attach 된 경우에는 해당 첨부파일 정보를 담고 있는 ValueObject 객체를 반환한다. ValueObject 는 다음 같은 컬럼을 담고 있다.
+	- type : 첨부파일의 content type
+	- name : 첨부파일 명칭
+	- size : 첨부파일의 크기 (Bytes 수)
+	- data : 첨부파일 내용 (byte\[])
+- public void setForward(String forwardString)
+	- 서비스 실행 결과를 처리할 View 의 URL 을 설정하는 Setter Method 이다.
+	- forwardString 의 형식 : name=\[forward:\|redirect:]URL
+		- forward: : URL 이동시 forward 방식으로 이동한다. 동일한 Web context 내에서만 이동이 가능하다. 디폴트 이동방식이다.
+		- redirect: : URL 이동시 redirect 방식으로 이동한다. Redirect 방식이므로 다른 도메인 URL 으로도 이동이 가능하다.
+-  public void setPrefix(String prefix)
+	- forward URL 앞에 공통으로 붙일 문자열을 설정하는 Setter Method 이다.
+- public void setSuffix(String suffix)
+	- forward URL 뒤에 공통으로 붙일 문자열을 설정하는 Setter Method 이다.
+- public WebActionForward createForward(String name)
+	- setForward() 메소드로 설정된 forwardURL 의 name을 파라메터로 전달하면 해당 URL을 찾아서 prefix와 suffix 를 추가한 후 WebActionForward 객체를 생성하여 반환한다.
+	- name 에 해당되는 forwardURL 이 설정되어 있지 않다면 name 자체를 URL 로 간주하여 WebActionForward 객체를 생성하여 반환한다.
+
+**작성 예시**
+
+```xml
+    <service name="testweb.main"
+             interface="s2.adapi.framework.web.WebAction"
+             class="test.web.TestWebActionImpl"
+             singleton="true">
+        <property name="forward" value="default:=/s2adapi/jsp/test.jsp"/>
+        <property name="forward" value="main:=forward:/s2adapi/main.home.main"/>
+        <property name="forward" value="market:=redirect:http://play.google.com"/>
+        <property name="prefix" value="/webapps/test"/>
+    </service>
+```
+
+WebAction 서비스는 아래와 같은 절차로 구현한다.
+
+- WebAction 서비스는 s2.adapi.framework.web.action.WebAction 인터페이스를 implements 한다.
+- showConfiguration() 과 setApplicationContext() 메소드가 구현된 AbstractWebAction 클래스가 제공되므로 이를 extends 한다.
+- public WebActionForward execute(HttpServletRequest request, HttpServletResponse response) throws Exception 메소드를 구현한다. 
+- 구현된 WebAction 서비스의 서비스 설정 파일을 작성한다. 
+
+**TestWebActionImpl.java**
+
+```java
+package test.web;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import s2.adapi.framework.vo.ValueObject;
+import s2.adapi.framework.web.action.AbstractWebAction;
+import s2.adapi.framework.web.action.WebActionForward;
+
+public class TestWebActionImpl extends AbstractWebAction {
+
+    @Override
+    public WebActionForward execute(HttpServletRequest request, HttpServletResponse replay) throws Exception {
+
+        // sample data 
+        ValueObject dataVO = new ValueObject();
+
+        dataVO.set("name", "kimhd");
+        dataVO.set("age", 30);
+        dataVO.set("gender", "M");
+
+        return createForward("default").addModel("code","member").addModel("userdata", dataVO);
+    }
+
+}
+```
+
+**서비스 설정 파일 예시**
+
+```xml
+<?xml version=\'1.0\' encoding=\'euc-kr\'?>
+<!DOCTYPE services
+    PUBLIC "-//S2adapi Corp.//DTD S2adapi Services Config 0.1//EN" "com/s2adapi/framework/container/service-config.dtd">
+
+<services module="test" pre-init="false">
+
+    <service name="testweb.main"
+             interface="s2.adapi.framework.web.WebAction"
+             class="test.web.TestWebActionImpl"
+             singleton="true">
+        <property name="forward" value="default:=/testweb/jsp/default.jsp"/>
+        <property name="prefix" value="/webapps/test"/>
+    </service>
+
+</services>
+```
+
+위와 같이 서비스 설정파일이 작성되었다면 위 WebAction 서비스의 서비스명은 "test.testweb.main" 이 되므로 아래의 URL 로 호출할 수 있다.
+
+-   http://your.domina/your_context/test.testweb.main
+
+위와 같이 호출하면 TestWebActionImpl.java 의 execute() 메소드가 호출된다.
+
+또한 위의 예시에서 "default" 명칭으로 WebActionForward 를 생성하여 리턴하였으므로 서비스 설정 파일에 설정된 "/testweb/jsp/test.jsp" 의 앞에 prefix 로 설정된 "/webapps/test" 가 추가되어 "/webapps/test/testweb/jsp/test.jsp" 로 forward 된다.
+
+## 3) WebMultiAction
+
+WebAction 은 execute() 라는 하나의 서비스 메소드만을 가질 수 있는 반면 WebMultiAction은 여러개의 서비스 메소드를 가질 수 있다. WebMultiAction 을 호출할 경우에는 HTTP Request 내에 어떤 메소드를 호출할 지 지정하는 파라메터를 포함시켜야한다. 아래는 WebMultiAction 의 interface 이다.
+
+**WebMultiAction**
+
+```java
+package s2.adapi.framework.web.action;
+
+import javax.servlet.http.HttpServletRequest;
+
+/**
+ * 하나의 WebAction 객체에서 여러 request 처리 구현을 위한 WebMultiAction 인터페이스이다.
+ */
+public interface WebMultiAction extends WebAction {
+
+    /**
+     * 파라메터로 전달된 HttpServletRequest를 이용하여 호출할 Method 명을 결정하여 리턴한다.
+     * @param request
+     * @return 메소드 명
+     */
+
+    public String getMethodName(HttpServletRequest request);
+
+}
+```
+
+아래는 WebMultiAction 의 처리흐름도이다.
+
+그림
+
+
+### (1) AbstractWebMultiAction
+
+AbstractWebMultiAction 클래스는 WebMultiAction 서비스 구현을 쉽게 할 수 있도록 필요한 기능을 제공하는 클래스이다. AbstractWebAction 클래스를 extends 하였으며 실제 구현 소스는 아래와 같다.
+
+**AbstractWebMultiAction 소스**
+
+```java
+package s2.adapi.framework.web.action;
+
+import java.io.IOException;
+import java.io.PrintWriter;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import s2.adapi.framework.util.StringHelper;
+
+public abstract class AbstractWebMultiAction extends AbstractWebAction implements WebMultiAction {
+
+    /**
+     * 호출할 메소드 명을 얻기위한 reqeust parameter 명
+     */
+    protected String methodSelector = null;
+
+    /**
+     * 호출할 메소드 명을 찾지 못할 경우 사용할 디폴트 메소드 명
+     */
+    protected String defaultMethodName = null;
+
+    public WebActionForward execute(HttpServletRequest request,
+HttpServletResponse response) throws Exception {
+
+        throw new Exception("execute() not implemented.");
+
+    }
+
+    public void showConfiguration(HttpServletResponse response) throws IOException {
+        super.showConfiguration(response);
+
+        PrintWriter out = response.getWriter();
+
+        out.print("<p>");
+        out.println("<ul>");
+        out.println("<li> Method Selector : " + methodSelector);
+        out.println("<li> Default Method : " + defaultMethodName);
+        out.println("</ul></p>");
+    }
+
+    /**
+     * 호출할 메소드 명을 얻기 위하여 사용할 파라메터의 이름(Selector)을 지정한다.
+     * Selector가 지정되지 않은 경우 <code>getMethodName()</code>는 항상 null을 리턴한다.
+     * @param selectorName
+     */
+    public void setSelector(String selectorName) {
+        this.methodSelector = selectorName;
+    }
+
+    /**
+     * 호출할 메소드 명을 찾지 못했을 경우 사용할 디폴트 메소드 명을 지정한다.
+     * @param defaultName
+     */
+    public void setDefaultMethod(String defaultName) {
+        this.defaultMethodName = defaultName;
+    }
+
+    /**
+     * HttpServletRequest의 request parameter 중에서 selector로 지정된 파라메터 명을 사용하여 호출할 메소드 명을 얻어온다. 
+     * Selector로 지정된 파라메터명에 해당되는 값이 존재하지 않으면 디폴트로 설정한 메소드 명을 반환한다. Selector나 디폴트 메소드명이 지정되지 않은 경우에는 null을 반환한다.
+     * @param request
+     * @param defaultSelector 설정된 Selector가 없을 경우에 사용할. 디폴트 selector 값
+     * @return 호출할 메소드명
+     */
+    public String getMethodName(HttpServletRequest request) {
+
+        String methodName = null;
+
+        if ( methodSelector != null ) {
+            methodName = StringHelper.null2string(request.getParameter(methodSelector),defaultMethodName);
+        }
+
+        return methodName;
+    }
+}
+```
+
+### (2) WebMultiAction 서비스 구현하기
+
+- 구현할 WebMultiAction 서비스의 interface 를 정의한다. 이때  s2.adapi.framework.web.action.WebMultiAction 을 extends 해야한다.
+- WebMultiAction 의 메소드들은 다음과 같은 형태로 작성해야한다.
+	- WebActionForward **your_method** (HttpServletRequest request, HttpServletResponse response) throws Exception
+- WebMultiAction 서비스를 클래스로 구현한다. 이때 위에서 작성한 서비스용 interface 를 implements 해야하며s2.adapi.framework.web.action.AbstractWebMultiAction 클래스를 extends 해야한다.
+- 구현된 WebMultiAction 의 서비스 설정 파일을 작성한다. 기본적으로는 WebAction 용 서비스 설정 파일 작성과 동일하며 여기에 selector 와 defaultMethod 설정을 추가하도록 한다.
+- 아래는 interface 와 구현 class 그리고 서비스 설정파일의 작성 예시이다.
+
+**TestWebMultiAction interface**
+
+```java
+package test.web;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import s2.adapi.framework.web.action.WebActionForward;
+import s2.adapi.framework.web.action.WebMultiAction;
+
+public interface TestWebMultiAction extends WebMultiAction {
+
+    WebActionForward display(HttpServletRequest request, HttpServletResponse response) throws Exception; 
+    WebActionForward update(HttpServletRequest request, HttpServletResponse response) throws Exception;
+
+}
+```
+
+**TestWebMultiActionImpl class**
+
+```java
+package test.web;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import s2.adapi.framework.web.action.AbstractWebMultiAction;
+import s2.adapi.framework.web.action.WebActionForward;
+
+public class TestWebMultiActionImpl extends AbstractWebMultiAction implements TestWebMultiAction {
+
+    @Override
+    public WebActionForward display(HttpServletRequest request, HttpServletResponse response) throws Exception {
+
+        // 여기에 구현한다.
+    }
+
+    @Override
+    public WebActionForward update(HttpServletRequest request, HttpServletResponse response) throws Exception {
+
+        // 여기에 구현한다.
+    }
+}
+```
+
+**서비스 설정파일 예시**
+
+```xml
+<services module="test" pre-init="false">
+
+    <service name="testmulti.main" 
+             interface="test.web.TestWebMultiAction" 
+             class="test.web.TestWebMultiActionImpl" 
+             singleton="true">
+        <property name="selector" value="method"/>
+        <property name="defaultMethod" value="display"/>
+        <property name="forward" value="default:=/testweb/jsp/multi_default.jsp"/>
+        <property name="prefix" value="/webapps/test"/>
+    </service>
+
+</services>
+```
+
+위의 설정에서 selector 를 "method" 로 설정하였으므로 HTTP Request 에서 method 파라메터의 값을 호출할 메소드 명으로 사용하게되며 만약 method 파라메터가 없다면 defaultMethod 로 설정된 "display" 메소드가 호출되게 된다. 결과적으로 아래와 같이 각각의 서비스 메소드를 호출할 수 있다.
+
+- http://your_domain/your_context/test.testmulti.main  또는 http://your_domain/your_context/test.testmulti.main?method=display
+	- TestWebMultiActionImpl 의 display() 메소드가 호출된다.
+-   http://your_domain/your_context/test.testmulti.main?method=update
+	- TestWebMultiActionImpl 의 update() 메소드가 호출된다.
+
+## 4) RestfulMultiWebAction
+
+RestfulMultiWebAction 은 REST API 방식의 WebAction 구현을 위하여 필요한 기능을 제공해주는 WebMultiAction의 구현 클래스이다. RestfulMultiWebAction 의 실제 소스는 아래와 같다.
+
+**RestfulMultiWebAction 소스**
+
+```java
+package s2.adapi.framework.web.action;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import s2.adapi.framework.container.NameAwareService;
+
+public abstract class RestfulMultiWebAction extends AbstractWebAction implements WebMultiAction, NameAwareService {
+
+    protected String serviceName = null;
+
+    public void setServiceName(String name) {
+        serviceName = name;
+    }
+
+    public String getServiceName() {
+        return serviceName;
+    }
+
+    // Restful API 에서 action 및 그 이후 부분들을 array 로 담아 반환한다.
+    protected String[] getPayload(HttpServletRequest request) {
+
+        String path = request.getServletContext().getContextPath();
+        String uri = request.getRequestURI();
+
+        String actionStr = uri.substring(path.length() + serviceName.length() - 1);
+
+        return actionStr.split("\\/");
+    }
+
+    @Override
+    public String getMethodName(HttpServletRequest request) {
+
+        String path = request.getServletContext().getContextPath();
+        String uri = request.getRequestURI();
+
+        if (serviceName.endsWith("*")) {
+            String actionStr = uri.substring(path.length() + serviceName.length() - 1);
+            return actionStr.split("\\/")[0];
+        }
+        else {
+            return null;
+        }
+    }
+
+    @Override
+    public WebActionForward execute(HttpServletRequest request, HttpServletResponse response) throws Exception {
+        throw new Exception("execute() not implemented.");
+    }
+}
+```
+
+각각의 메소드 기능은 다음과 같다.
+
+- public void setServiceName(String name)
+	- NameAwareService interface 의 메소드를 구현한 것이다. 
+	- NameAwareService 를 구현하는 경우 ServiceContainer 가 서비스 객체 생성시 해당 서비스의 이름을 setServiceName() 메소드를 통하여 전달해준다. 
+- public String getMethodName(HttpServletRequest request)
+	- WebMultiAction 의 메소드를 구현한 것이다.
+	- 호출되는 메소드 명은 HTTP Request의 URI에서 자신의 서비스 명칭 다음에 오는 path element 를 사용한다.
+	- 예를 들어 서비스 설정파일에 등록된 서비스 명칭이 "/api/reward/*" 인 경우 호출된 URL이 http://\..../s2adapi/api/reward/adways/12334/56789 와 같다면 /api/reward/ 다음에 오는 adways 가 호출되는 메소드명이되며 따라서 구현된 RestfulMultiWebAction 서비스 내에는 public WebActionForward adways(HttpServletRequest request, HttpServletResponse response) throws Exception 메소드가 구현되어 있어야 한다.
+- protected String[] getPayload(HttpServletRequest request)
+	- 호출된 HTTP Request URI 에서 자신의 서비스 명칭 이후의 path element 들을 배열로 반환한다. 그러므로 반환된 배열의 첫번째 아이템은 호출되는 메소드 명이 들어있다.
+
+RestfulMultiWebAction 의 구현하기
+
+- 구현할 RestfulMultiWebAction 서비스의 interface 를 작성한다. 이때  **s2.adapi.framework.web.action.WebMultiAction** 을 extends 해야한다.
+- RestfulMultiWebAction의 메소드들은 WebMultiAction 과 마찬가지로 아래와 같은 형태로 작성해야한다.
+	- WebActionForward **your_method** (HttpServletRequest request, HttpServletResponse response) throws Exception
+- RestfulMultiWebAction 서비스를 클래스로 구현한다. 이때 위에서 작성한 서비스용 interface 를 implements 해야하며  **s2.adapi.framework.web.action.RestfulMultiWebAction** 클래스를 extends 해야한다.
+- 구현된 RestfulMultiWebAction 의 서비스 설정 파일을 작성한다.
+	- 기본적으로는 WebAction 용 서비스 설정 파일 작성과 동일하다. 다만 아래의 내용에 주의해야한다.
+		- 서비스 명은 path 형태의 문자열로 작성하며 마지막 path element 는 * 로 끝나도록 한다.
+		- 예 : **"/api/ref/*"**, **"/api/reward/*"**
+		- 서비스 명이 HTTP Request URI 내에 포함되는 형태이므로 서비스 설정 파일에는 module 을 정의하지 않는다.
+		- 예를 들어 \<services module="ad" pre-init="false"> 와 같이 module 을 지정한 경우 서비스 명은 "ad./api/ref/*" 로 인식이되므로 실제적으로는 호출할 수 있는 URI 형태가 될 수 없다.
+		- 서비스 명과 같은 URL 이 WebActionDispatcher 를 통해 처리될 수 있도록 web.xml 파일 내에 **<servlet-mapping>** 설정되어 있어야한다.
+- 아래는 실제 구현 예시이다.
+
+**RestfulMultiWebAction 예시용 interface**
+
+```java
+package s2.adapi.ad.service.adext;
+
+import java.io.IOException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import s2.adapi.framework.web.action.WebActionForward;
+import s2.adapi.framework.web.action.WebMultiAction;
+
+/**
+ * 외부 postback 호출이 되어 conversion 처리를 수행한다.
+ */
+public interface ExternalEventWebAction extends WebMultiAction {
+
+   /**
+    * Adways 연동 광고앱 리워드 지급 요청 (Rest 방식 구현)
+    * http://www.s2adapi.com/s2adapi/api/reward/adways/<adkey>
+    */
+    public WebActionForward adways(HttpServletRequest request, HttpServletResponse response) throws Exception;
+
+}
+```
+
+**RestfulMultiWebAction 구현 클래스 예시**
+
+```java
+package s2.adapi.ad.service.adext;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import s2.adapi.framework.web.action.RestfulMultiWebAction;
+import s2.adapi.framework.web.action.WebActionForward;
+
+public class ExternalEventWebActionRestImpl extends RestfulMultiWebAction implements ExternalEventWebAction {
+
+    private ExternalEvent externalEvent = null;
+
+    public void setExternal(ExternalEvent link) {
+        externalEvent = link;
+    }
+
+    @Override
+    public WebActionForward adways(HttpServletRequest request, HttpServletResponse response) throws Exception {
+
+        String[] payload = getPayload(request);
+        String adkey = (payload.length > 1) ? payload[1] : null;
+        String extData = (payload.length > 2) ? payload[2] : null;
+
+        if (adkey == null) {
+            writeDefaultPostbackResult(false, response);
+            return;
+        }
+
+        // ... 
+
+        return null;
+    }
+}
+```
+
+**서비스 설정 파일 예시**
+
+```xml
+<services pre-init="false">
+
+    <service name="/api/reward/*"
+             interface="s2.adapi.ad.service.adext.ExternalEventWebAction"
+             class="s2.adapi.ad.service.adext.ExternalEventWebActionRestImpl"
+             pre-init="true"
+             singleton="true">
+         <property name="external" ref="ad.ExternalEvent"/>
+    </service>
+
+</services>
+```
+
+**web.xml 의 <servlet-mapping> 설정 예시**
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE web-app PUBLIC "-//Sun Microsystems, Inc.//DTD Web
+Application 2.3//EN" "http://java.sun.com/dtd/web-app_2\_3.dtd">
+
+<web-app id="s2adapi">
+
+    <display-name>s2adapi</display-name>
+
+    <description>This is S2adapi Web Application.</description>
+
+    <listener>
+      <listener-class>s2.adapi.framework.web.action.WebApplicationContextLoader</listener-class>
+    </listener>
+
+    <servlet>
+      <servlet-name>dispatcher</servlet-name>
+      <servlet-class>s2.adapi.server.s2adapi.WebActionDispatcher</servlet-class>
+    </servlet>
+
+    <servlet-mapping>
+        <servlet-name>dispatcher</servlet-name>
+        <url-pattern>/api/*</url-pattern>
+    </servlet-mapping>
+
+</web-app>
+```
+
+위 예시에서 http://your_domain/your_context/api/reward/adways/1234/5678 을 호출하면 ExternalEventWebActionRestImpl 클래스의 adways() 메소드가 호출되며 getPayload() 호출 결과로 
+	- payload[0] = "always"
+	- payload[1] = "1234"
+	- payload[2] = "5678" 이 담겨지게 된다.
+
