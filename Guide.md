@@ -3083,10 +3083,10 @@ Configurator 가 로딩한 설정값들은  Configurator 객체를 사용하여
 	- 두번째 파라메터로 defaultValue 가 지정된 경우에는 해당 설정값이 없는 경우 defaultValue 가 반환된다.
 - public String getPath(String key, String defaultPath)
 	- 설정파일에 key 명칭으로 설정된 값을 경로로 반환한다. 시스템에서 사용하는 경로 구분자가 적용되어 반환된다.
-- public Set<Object> getKeySet()
+- public Set\<Object> getKeySet()
 	- 설정파일에 설정된 모든 설정 값들의 key를 반환한다.여기에는 System Property의 설정값들도 모두 포함되어 있다.
 
-### (3) s2adapi-config.properties (설정파일)
+### (2) s2adapi-config.properties (설정파일)
 
 프레임워크 설정파일에 설정되는 항목들과 그 의미는 다음과 같다. 참고로 설정 값을 지정할 때에 다른 설정값을 ${설정값명칭} 을 사용하여 참조할 수 있다.
 
