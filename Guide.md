@@ -2878,7 +2878,7 @@ public class ExternalEventWebActionRestImpl extends RestfulMultiWebAction implem
 ```
 
 위 예시에서 http://your_domain/your_context/api/reward/adways/1234/5678 을 호출하면 ExternalEventWebActionRestImpl 클래스의 adways() 메소드가 호출되며 getPayload() 호출 결과로 
-	- payload\[0] = "always"
-	- payload\[1] = "1234"
-	- payload\[2] = "5678" 이 담겨지게 된다.
+- payload\[0] = "always"
+- payload\[1] = "1234"
+- payload\[2] = "5678" 이 담겨지게 된다.
 
