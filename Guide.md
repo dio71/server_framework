@@ -1472,13 +1472,16 @@ public interface ColumnReader {
 - ObjectColumnReader : 컬럼값을 Object로 읽어와서 java.lang.Object 객체로 반환한다.
 
 ### (2) 디폴트 ColumnReader (PostgreSQL, MySql, SqlServer, Sybase 포함)
-![](vertopal_b378c48198ea424d858d505c4b800e25/media/image1.png)
+
+![default_column_reader](./images/default_column_reader.jpg)
 
 ### (3) Oracle 기본
-ColumnReader![](vertopal_b378c48198ea424d858d505c4b800e25/media/image2.png)
+
+![oracle_column_reader](./images/oracle_column_reader.jpg)
 
 ### (4) DB2 기본
-ColumnReader![](vertopal_b378c48198ea424d858d505c4b800e25/media/image3.png)
+
+![db2_column_reader](./images/db2_column_reader.jpg)
 
 ### (5) Global ColumnReader 설정하기
 
@@ -2389,7 +2392,7 @@ public interface WebAction {
 
 WebAction 의 처리 흐름은 아래 그림과 같다.
 
-그림
+![webaction_flow](./images/webaction_flow.jpg)
 
 
 ### (1) WebActionForward
@@ -2549,7 +2552,7 @@ public interface WebMultiAction extends WebAction {
 
 아래는 WebMultiAction 의 처리흐름도이다.
 
-그림
+![webmultiaction_flow](./images/webmultiaction_flow.jpg)
 
 
 ### (1) AbstractWebMultiAction
