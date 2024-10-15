@@ -3142,7 +3142,7 @@ s2adapi.resources..bundle=s2.adapi.framework.resources.impl.XMLResources
 s2adapi.resources.reload.bundle=10
 
 ####################################################################
-#        JdbcQueryDAO Global ResultMap
+# JdbcQueryDAO Global ResultMap
 ####################################################################
 
 s2adapi.dao.globalmap=resources/dao_globalmap.xml
@@ -3150,7 +3150,7 @@ s2adapi.dao.fetch.limit=1000
 
 ####################################################################
 #
-#     MultipartRequestWrapper의 인코딩 값과 HttpRequest의 Defualt 인코딩 값을 설정
+# MultipartRequestWrapper의 인코딩 값과 HttpRequest의 Defualt 인코딩 값을 설정
 #
 # default = euc-kr
 ####################################################################
@@ -3159,16 +3159,16 @@ s2adapi.web.upload.encoding=utf-8
 s2adapi.web.default.encoding=utf-8
 
 ####################################################################
-#        s2adapi IoC Container Service configurations
+# ServiceContainer configurations
 ####################################################################
 
 s2adapi.container.default.name=s2adapi
 s2adapi.container.s2adapi.impl=s2.adapi.framework.container.impl.ReloadableXmlServiceContainer
 s2adapi.container.s2adapi.reload.interval=5
 s2adapi.container.s2adapi.dir.module=${s2adapi.config.base.absolute}/../../../components
-s2adapi.container.s2adapi.dir.class=${s2adapi.config.base.absolute}/../../../../../work/\_s2adapi\_
+s2adapi.container.s2adapi.dir.class=${s2adapi.config.base.absolute}/../../../../../work/_api_
 s2adapi.container.s2adapi.service.config.path=svcdefs
-s2adapi.container.s2adapi.service.config=s2adapi\_.*\\\\.xml
+s2adapi.container.s2adapi.service.config=s2adapi\_.*\\.xml
 
 #### log4j 설정 파일 
 
