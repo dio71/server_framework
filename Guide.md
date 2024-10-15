@@ -2949,3 +2949,229 @@ public class WebActionDispatcher extends s2.adapi.framework.web.action.WebAction
 
 }
 ```
+
+# 8. Messages
+
+### (1) 메시지 파일
+
+사용자에게 보여주는 각종 메시지를 메시지 파일을 사용하여 통합관리하기 위한 목적으로 사용한다. 언어별 메시지 파일을 준비하여 다국어 처리도 가능하다.
+
+메시지 파일은 XML 형식으로 작성하며 구조는 다음과 같다.
+
+- \<resources> : 최상위 노드이다. 하위에 \<resource>  노드들을 갖는다.
+- \<resource> : 하나의 메시지를 정의한다. 다음과 같은 형식으로 작성한다.
+	- \<resource id="message_id"><![CDATA[메시지 내용을 작성, 파라메터 가능함 {0} {1}]]></resource>
+	- message_id : 메시지를 식별하기 위한 키 값이다.
+	- 메시지 내용에는 파라메터를 정의할 수 있으며 첫번째 파라메터는 {0}, 두번째 파라메터는 {1} 과 같은 식으로 지정한다.
+
+메시지 파일의 작성 예시는 다음과 같다.
+
+**메시지 파일 작성 예시 : bundle_ko.xml**
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+
+<resources>
+    <resource id="login.login.main_id"><![CDATA[아이디]]></resource>
+    <resource id="login.login.main_pwd"><![CDATA[비밀번호]]></resource>
+    <resource id="login.login.main_name"><![CDATA[이름]]></resource>
+    <resource id="login.login.main_email"><![CDATA[이메일]]></resource>
+    <resource id="login.login.main_signup"><![CDATA[회원가입]]></resource>
+    <resource id="login.login.main_forgot"><![CDATA[아이디/비밀번호 찾기]]></resource>
+    <resource id="login.login.main_find_id"><![CDATA[아이디 찾기]]></resource>
+    <resource id="login.login.main_find_pw"><![CDATA[비밀번호 찾기]]></resource>
+    <resource id="login.login.main_invalid_email"><![CDATA[이메일 형식이 잘못되었습니다.]]></resource>
+</resources>
+```
+
+메시지 파일 로딩 절차는 아래와 같다.
+
+- 로딩할 메시지 파일은 기본 명칭으로 지정한다. (언어나 국가 코드를 제외한 파일 명) 예) bundle.xml
+- 메시지 파일명에 현재 시스템의 언어코드와 국가 코드를 추가하여 메시지 파일을 찾는다. 예) bundle_ko_KR.xml
+- 해당 메시지 파일이 없으면 언어코드만 추가하여 메시지 파일을 찾는다. 예) bundle_ko.xml
+- 이 경우에도 해당 메시지 파일이 없으면 기본 파일 명으로 메시지 파일을 찾는다. 예) bundle.xml
+
+메시지 내용을 가져오기 위해서는 Messages 클래스를 사용한다. Messages 클래스가 제공하는 메소드는 아래와 같다.
+
+- public static Messages getMessages()
+- public static Messages getMessages(String name)
+	- Messages 객체를 전달받는다. 파라메터로 메시지 파일의 구분값을 전달한다. 이 값은 프레임워크 설정파일에서 지정되어 있다. 자세한 내용은 [Configuration]  을 참고한다.
+	- 파라메터를 지정하지 않으면 디폴트로 설정된 메시지 파일이 사용된다.
+- public String getMessage(String key)
+- public String getMessage(String key, Object arg)
+- public String getMessage(String key, Object[] args)
+	- 전달 받은 Messages 객체에 설정된 메시지를 받아온다.
+	- key : 메시지 파일에 설정된 message_id 이다.
+	- arg, args : 메시지 내용에 파라메터({0}, {1} ..) 이 있는 경우 전달된 파라메터 값으로 치횐된다.
+
+### (2) 예외 처리
+
+업무 처리와 관련된 오류발생 시 프레임워크에서 제공하는 ApplicationException 을 생성하여 throw 한다. ApplicationException 클래스가 제공하는 메소드들은 다음과 같다.
+
+- 생성자
+	- public ApplicationException(String key)
+	- public ApplicationException(Throwable cause)
+	- public ApplicationException(String key, Object param1)
+	- public ApplicationException(String key, Object param1, Throwable cause)
+	- public ApplicationException(String key, Object[] params)
+	- public ApplicationException(String key, Object[] params, Throwable cause)
+		- 디폴트 메시지 파일에서 파라메터 전달된 key 에 해당되는 메시지를 이용하여 ApplicationException 객체를 생성한다.
+		- param1, params : 해당 메시지에 파라메터({0}, {1} ...) 가 있는 경우 전달된 파라메터 값으로 치환된다.
+		- cause : 원인이되는 Exception 이 있는 경우 이를 같이 지정한다.
+ - 메시지 내용 가져오기
+	- public String getKey()
+		- 설정된 메시지 키 값이 반환된다.
+	- public String getMessage()
+		- key 로 지정된 메시지 내용이 반환된다.
+	- public String getLocalizedMessage()
+		- key 로 지정된 메시지 내용과 오류 발생위치가 반환된다.
+		- 반환되는 문자열 구조는 아래와 같다. <메시지 내용>|<오류 발생위치>
+		- 오류 발생 위치는 업무 프로그램 내에서의 StackTrace 를 사용하여 생성된다.
+
+ 예외 처리의 코딩 예시는 다음과 같다.
+
+**예외처리 예시**
+
+```java
+    public Mail setHtmlMsg(String msg) throws ApplicationException {
+
+        try {
+            htmlEmail.setHtmlMsg(msg);
+        } 
+        catch (EmailException e) {
+            throw new ApplicationException("s2adapi.error.10002", e);
+        }
+
+        return this;
+    }
+```
+
+# 9. Configuration
+
+### (1) Configurator
+
+Configurator 는 정해진 절차에 따라 프레임워크의 내부 설정을 진행한다. 이를 위하여  프레임워크가 로딩 되는 시점에 아래의 절차에 따라서 설정 파일을 로딩한다.
+
+- System Property 에서 "s2adapi.config.path" 로 지정된 경로가 있는지 확인한다. 있으면 그 경로를 설정 파일의 path로 사용한다. 지정된 경로가 없으면 기본값으로 "s2adapi-config.properties" 를 설정 파일 path로 사용한다.
+- 결정된 설정 파일 path 를 class-path 에서 찾는다. 있으면 그 파일을 사용하여 설정 파일을 로딩한다.
+- class-path 에서 설정 파일을 못찾으면 설정 파일 앞에 "resources" 경로를 추가하여 다시 설정 파일을 로딩한다.
+- 위 경로에서도 설정파일을 찾을 수 없으면 ConfiguratorException 이 발생된다.
+- 아래의 값들이 System Property 에 설정된다.
+	- s2adapi.config.path : 로딩된 설정파일의 class-path 상의 경로 (파일명 포함)
+	- s2adapi.config.base : 로딩된 설정파일의 class-path 상의 경로 (파일명 제외)
+	- s2adapi.config.base.absolute : 설정 파일의 파일시스템 상의 절대 경로
+	- s2adapi.config.parent.base : 설정 파일의 절대 경로의 상위 경로 명
+	- s2adapi.config.parent.parent.base : 설정 파일의 절대 경로의 상위의 상위 경로 명
+- 설정 값내에 "s2adapi.log4j.config" 항목이 있는 경우에는 그 파일 경로를 이용하여 log4j 를 재 설정한다.
+
+Configurator 객체는 singleton 객체로 관리되며 아래의 static 메소드를 호출하여 획득할 수 있다.
+
+- public static Configurator getConfigurator() throws ConfiguratorException
+	- 위 절차에 따라서 설정파일을 로딩하고 설정결과를 당은 Configurator 객체를 반환한다.
+
+Configurator 가 로딩한 설정값들은  Configurator 객체를 사용하여 접근할 수 있다. Configurator 객체는 Configurator.getConfigurator()를 호출하여 획득할 수 있으며 아래의 메소드들을 제공한다.
+
+- public String getString(String key) throws ConfiguratorException
+- public String getString(String key, String defaultValue)
+- public int getInt(String key) throws ConfiguratorException
+- public int getInt(String key, int defaultValue)
+- public long getLong(String key) throws ConfiguratorException
+- public long getLong(String key, long defaultValue)
+- public boolean getBoolean(String key) throws ConfiguratorException
+- public boolean getBoolean(String key, boolean defaultValue)
+	- 설정파일에 key 명칭으로 설정된 값을 가져온다. 설정파일에 설정되지 않은 경우에는 System Property 에서 확인하고 SystemProperty 에도 없는 경우에는 ConfiguratorException 을 throw 한다.
+	- 두번째 파라메터로 defaultValue 가 지정된 경우에는 해당 설정값이 없는 경우 defaultValue 가 반환된다.
+- public String getPath(String key, String defaultPath)
+	- 설정파일에 key 명칭으로 설정된 값을 경로로 반환한다. 시스템에서 사용하는 경로 구분자가 적용되어 반환된다.
+- public Set<Object> getKeySet()
+	- 설정파일에 설정된 모든 설정 값들의 key를 반환한다.여기에는 System Property의 설정값들도 모두 포함되어 있다.
+
+### (3) s2adapi-config.properties (설정파일)
+
+프레임워크 설정파일에 설정되는 항목들과 그 의미는 다음과 같다. 참고로 설정 값을 지정할 때에 다른 설정값을 ${설정값명칭} 을 사용하여 참조할 수 있다.
+
+- Resource 및 Messages 관련
+	- s2adapi.resources.default.name : 디폴트 리소스 명칭을 지정한다.
+	- s2adapi.resources.\<리소스명> : \<리소스명> 으로 로딩할 리소스 파일의 class-path 를 설정한다.
+	- s2adapi.resources.\<리소스명> : \<리소스명>의 리소스 파일을 로딩하기 위하여 사용하는 클래스를 설정한다.
+	- s2adapi.resources.reload.\<리소스명> : \<리소스명>의 리소스 파일을 자동으로 재로딩할 간격을 지정한다. (분)
+- DAO 관련
+	- s2adapi.dao.globalmap : global mapping 파일의 class-path 를 설정한다.
+	- s2adapi.dao.fetch.limit : DAO 에서 조회 query 실행시 최대 건수를 설정한다. 여기에서 설정된 건수 이상이 조회되면 SqlQueryException 이 발생된다.
+- Web 관련
+	- s2adapi.web.upload.encoding : 파일업로드시에 적용할 인코딩 값을 설정한다. (디폴트 euc-kr)
+	- s2adapi.web.default.encoding : HTTP request 에 인코딩 설정이 없을 경우 적용할 기본 인코딩 값을 설정한다. (디폴트 euc-kr)
+- ServiceContainer 관련
+	- s2adapi.container.default.name : 기본 서비스 컨테이너 명칭을 지정한다.
+	- s2adapi.container.\<컨테이너명>.impl : \<컨테이너명> 으로 지정된 ServiceContainer 의 구현 클래스를 지정한다.
+	- s2adapi.container.\<컨테이너명>.reload.interval : ServiceContainer 의 구현 클래스가  ReloadableXmlServiceContainer 인 경우에 리로딩여부를 체크하는 주기를 설정한다. (초)
+	- s2adapi.container.\<컨테이너명>.dir.module : 모듈 Jar 파일을 저장하는 경로를 지정한다.
+	- s2adapi.container.\<컨테이너명>.dir.class : 모듈 Jar 파일을 압축 해재하는 디렉토리 경로를 지정한다.
+	- s2adapi.container.\<컨테이너명>.service.config.path : 서비스 설정파일들이 위치하는 class-path 경로를 지정한다.
+	- s2adapi.container.\<컨테이너명>.service.config : 로딩할 서비스 설정파일의 패턴을 나열한다. 
+- Log4j 관련
+	- s2adapi.log4j.config : 로딩할 log4j 설정파일의 class-path 를 설정한다.
+- 자동생성되는 설정 값
+	- s2adapi.config.path : 로딩된 설정파일의 class-path 경로 (파일명 포함)
+	- s2adapi.config.base : 로딩된 설정파일의 class-path 상의 경로 (파일명 제외)
+	- s2adapi.config.base.absolute : 설정 파일의 파일시스템 상의 절대 경로
+	- s2adapi.config.parent.base : 설정 파일의 절대 경로의 상위 경로 명
+	- s2adapi.config.parent.parent.base : 설정 파일의 절대 경로의 상위의 상위 경로 명
+
+아래는 실제 설정파일 예시이다.
+
+**s2adapi-config.properties**
+
+```
+####################################################################
+#
+# 디폴트로 사용할 메시지 리소스 파일 명과 해당 파일을 로딩하기 위한 리소스 팩토리 클래스 명을 설정
+# 주기적으로 리소스를 재로딩하고자 할 경우에는 reload 값을 설정(분)
+#
+####################################################################
+
+s2adapi.resources.default.name=default
+s2adapi.resources.default=${s2adapi.config.base}/default_messages
+s2adapi.resources..default=s2.adapi.framework.resources.impl.XMLResources
+s2adapi.resources.reload.default=10
+s2adapi.resources.portal=${s2adapi.config.base}/portal
+s2adapi.resources..portal=s2.adapi.framework.resources.impl.XMLResources
+s2adapi.resources.reload.portal=10
+s2adapi.resources.bundle=${s2adapi.config.base}/bundle
+s2adapi.resources..bundle=s2.adapi.framework.resources.impl.XMLResources
+s2adapi.resources.reload.bundle=10
+
+####################################################################
+#        JdbcQueryDAO Global ResultMap
+####################################################################
+
+s2adapi.dao.globalmap=resources/dao_globalmap.xml
+s2adapi.dao.fetch.limit=1000
+
+####################################################################
+#
+#     MultipartRequestWrapper의 인코딩 값과 HttpRequest의 Defualt 인코딩 값을 설정
+#
+# default = euc-kr
+####################################################################
+
+s2adapi.web.upload.encoding=utf-8
+s2adapi.web.default.encoding=utf-8
+
+####################################################################
+#        s2adapi IoC Container Service configurations
+####################################################################
+
+s2adapi.container.default.name=s2adapi
+s2adapi.container.s2adapi.impl=s2.adapi.framework.container.impl.ReloadableXmlServiceContainer
+s2adapi.container.s2adapi.reload.interval=5
+s2adapi.container.s2adapi.dir.module=${s2adapi.config.base.absolute}/../../../components
+s2adapi.container.s2adapi.dir.class=${s2adapi.config.base.absolute}/../../../../../work/\_s2adapi\_
+s2adapi.container.s2adapi.service.config.path=svcdefs
+s2adapi.container.s2adapi.service.config=s2adapi\_.*\\\\.xml
+
+#### log4j 설정 파일 
+
+s2adapi.log4j.config=${s2adapi.config.base}/log4j.properties
+s2adapi.config=${s2adapi.config.base.absolute}/s2adapi_config.xml
+```
