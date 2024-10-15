@@ -2354,6 +2354,7 @@ public interface WebAction {
     public void setWebApplicationContext(WebApplicationContext ctx);
 
 }
+```
 
 WebAction 의 처리 흐름은 아래 그림과 같다.
 
@@ -2482,7 +2483,7 @@ public class TestWebActionImpl extends AbstractWebAction {
 
 위와 같이 서비스 설정파일이 작성되었다면 위 WebAction 서비스의 서비스명은 "test.testweb.main" 이 되므로 아래의 URL 로 호출할 수 있다.
 
--   http://your.domina/your_context/test.testweb.main
+- http://your.domina/your_context/test.testweb.main
 
 위와 같이 호출하면 TestWebActionImpl.java 의 execute() 메소드가 호출된다.
 
@@ -2548,11 +2549,8 @@ public abstract class AbstractWebMultiAction extends AbstractWebAction implement
      */
     protected String defaultMethodName = null;
 
-    public WebActionForward execute(HttpServletRequest request,
-HttpServletResponse response) throws Exception {
-
+    public WebActionForward execute(HttpServletRequest request, HttpServletResponse response) throws Exception {
         throw new Exception("execute() not implemented.");
-
     }
 
     public void showConfiguration(HttpServletResponse response) throws IOException {
@@ -2586,7 +2584,8 @@ HttpServletResponse response) throws Exception {
 
     /**
      * HttpServletRequest의 request parameter 중에서 selector로 지정된 파라메터 명을 사용하여 호출할 메소드 명을 얻어온다. 
-     * Selector로 지정된 파라메터명에 해당되는 값이 존재하지 않으면 디폴트로 설정한 메소드 명을 반환한다. Selector나 디폴트 메소드명이 지정되지 않은 경우에는 null을 반환한다.
+     * Selector로 지정된 파라메터명에 해당되는 값이 존재하지 않으면 디폴트로 설정한 메소드 명을 반환한다.
+     * Selector나 디폴트 메소드명이 지정되지 않은 경우에는 null을 반환한다.
      * @param request
      * @param defaultSelector 설정된 Selector가 없을 경우에 사용할. 디폴트 selector 값
      * @return 호출할 메소드명
@@ -2647,13 +2646,11 @@ public class TestWebMultiActionImpl extends AbstractWebMultiAction implements Te
 
     @Override
     public WebActionForward display(HttpServletRequest request, HttpServletResponse response) throws Exception {
-
         // 여기에 구현한다.
     }
 
     @Override
     public WebActionForward update(HttpServletRequest request, HttpServletResponse response) throws Exception {
-
         // 여기에 구현한다.
     }
 }
@@ -2681,7 +2678,7 @@ public class TestWebMultiActionImpl extends AbstractWebMultiAction implements Te
 
 - http://your_domain/your_context/test.testmulti.main  또는 http://your_domain/your_context/test.testmulti.main?method=display
 	- TestWebMultiActionImpl 의 display() 메소드가 호출된다.
--   http://your_domain/your_context/test.testmulti.main?method=update
+- http://your_domain/your_context/test.testmulti.main?method=update
 	- TestWebMultiActionImpl 의 update() 메소드가 호출된다.
 
 ## 4) RestfulMultiWebAction
@@ -2855,8 +2852,7 @@ public class ExternalEventWebActionRestImpl extends RestfulMultiWebAction implem
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 
-<!DOCTYPE web-app PUBLIC "-//Sun Microsystems, Inc.//DTD Web
-Application 2.3//EN" "http://java.sun.com/dtd/web-app_2\_3.dtd">
+<!DOCTYPE web-app PUBLIC "-//Sun Microsystems, Inc.//DTD Web Application 2.3//EN" "http://java.sun.com/dtd/web-app_2\_3.dtd">
 
 <web-app id="s2adapi">
 
