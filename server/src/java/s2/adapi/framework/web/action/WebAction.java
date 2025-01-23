@@ -2,8 +2,8 @@ package s2.adapi.framework.web.action;
 
 import java.io.IOException;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 /**
  * Web MVC Framework의 WebAction 인터페이스이다. 

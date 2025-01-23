@@ -1,6 +1,6 @@
 package s2.adapi.framework.web.action;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 /**
  * 하나의 WebAction 객체에서 여러 request 처리 구현을 위한 WebMultiAction 인터페이스이다.

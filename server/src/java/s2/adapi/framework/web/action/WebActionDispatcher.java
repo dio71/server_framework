@@ -10,10 +10,10 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.TreeSet;
 
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -170,9 +170,9 @@ public class WebActionDispatcher extends HttpServlet {
      */
     public static final String ATTACH_FILE_MAXSIZE_KEY = "attach.maxsize";
 
-    private static final long DEFAULT_ATTACH_FILE_MAXSIZE = 10000000;
+    private static final int DEFAULT_ATTACH_FILE_MAXSIZE = 10000000;
 
-    private long attachFileSizeLimit = DEFAULT_ATTACH_FILE_MAXSIZE;
+    private int attachFileSizeLimit = DEFAULT_ATTACH_FILE_MAXSIZE;
 
     /**
      * WebActionDispatcher 명령들 중 현재 설정 상태를 출력하는 명령이다.
@@ -213,8 +213,9 @@ public class WebActionDispatcher extends HttpServlet {
         String attachFileMaxSize = getInitParameter(ATTACH_FILE_MAXSIZE_KEY);
         if (!StringHelper.isNull(attachFileMaxSize)) {
             try {
-                attachFileSizeLimit = Long.parseLong(attachFileMaxSize);
-            } catch (Exception ex) {
+                attachFileSizeLimit = Integer.parseInt(attachFileMaxSize);
+            } 
+            catch (Exception ex) {
                 log.error("failed to set attach file size, use default value.",ex);
                 attachFileSizeLimit = DEFAULT_ATTACH_FILE_MAXSIZE;
             }
@@ -226,7 +227,8 @@ public class WebActionDispatcher extends HttpServlet {
         if (!StringHelper.isNull(exceptionHandlerClass)) {
             try {
                 exceptionHandler = (ExceptionHandler)ObjectHelper.instantiate(exceptionHandlerClass);
-            } catch (Exception ex) {
+            } 
+            catch (Exception ex) {
                 log.error("cannot instantiate exception handler class :"+exceptionHandlerClass,ex);
             }
         }

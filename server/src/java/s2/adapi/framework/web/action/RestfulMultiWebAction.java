@@ -1,7 +1,7 @@
 package s2.adapi.framework.web.action;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import s2.adapi.framework.container.NameAwareService;
 

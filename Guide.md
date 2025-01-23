@@ -464,21 +464,21 @@ XML 기반의 서비스 설정 기능을 제공하는 ServiceContainer 의 구�
 
 <services module="jdbc" pre-init="false">
     <service name="admdb"
-             interface="javax.sql.DataSource"
+             interface="jakarta.sql.DataSource"
              class="s2.adapi.framework.dao.sql.DataSource"
              singleton="true">
         <property name="dsn" value="java:comp/env/jdbc/admdb"/>
     </service>
 
     <service name="apidb01"
-             interface="javax.sql.DataSource"
+             interface="jakarta.sql.DataSource"
              class="s2.adapi.framework.dao.sql.DataSource"
              singleton="true">
         <property name="dsn" value="java:comp/env/jdbc/apidb01"/>
     </service>
 
     <service name="apidb02"
-             interface="javax.sql.DataSource"
+             interface="jakarta.sql.DataSource"
              class="s2.adapi.framework.dao.sql.DataSource"
              singleton="true">
         <property name="dsn" value="java:comp/env/jdbc/apidb02"/>
@@ -2225,9 +2225,9 @@ package s2.adapi.server.s2adapi;
 
 import java.sql.SQLException;
 import java.util.Map;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import org.apache.log4j.MDC;
 
@@ -2339,7 +2339,7 @@ WebActionForward forward) 
     <resource-ref>
       <description>apidb</description>
       <res-ref-name>jdbc/apidb</res-ref-name>
-      <res-type>javax.sql.DataSource</res-type>
+      <res-type>jakarta.sql.DataSource</res-type>
       <res-auth>Container</res-auth>
     </resource-ref>
 
@@ -2354,8 +2354,8 @@ HTTP Request 를 받아서 로직을 처리하고자 할 경우에는 반드시 
 package s2.adapi.framework.web.action;
 
 import java.io.IOException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 public interface WebAction {
 
@@ -2470,8 +2470,8 @@ WebAction 서비스는 아래와 같은 절차로 구현한다.
 ```java
 package test.web;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import s2.adapi.framework.vo.ValueObject;
 import s2.adapi.framework.web.action.AbstractWebAction;
@@ -2532,7 +2532,7 @@ WebAction 은 execute() 라는 하나의 서비스 메소드만을 가질 수 �
 ```java
 package s2.adapi.framework.web.action;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 /**
  * 하나의 WebAction 객체에서 여러 request 처리 구현을 위한 WebMultiAction 인터페이스이다.
@@ -2566,8 +2566,8 @@ package s2.adapi.framework.web.action;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import s2.adapi.framework.util.StringHelper;
 
@@ -2651,8 +2651,8 @@ public abstract class AbstractWebMultiAction extends AbstractWebAction implement
 ```java
 package test.web;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import s2.adapi.framework.web.action.WebActionForward;
 import s2.adapi.framework.web.action.WebMultiAction;
@@ -2670,8 +2670,8 @@ public interface TestWebMultiAction extends WebMultiAction {
 ```java
 package test.web;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import s2.adapi.framework.web.action.AbstractWebMultiAction;
 import s2.adapi.framework.web.action.WebActionForward;
@@ -2724,8 +2724,8 @@ RestfulMultiWebAction 은 REST API 방식의 WebAction 구현을 위하여 필�
 ```java
 package s2.adapi.framework.web.action;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import s2.adapi.framework.container.NameAwareService;
 
@@ -2807,8 +2807,8 @@ RestfulMultiWebAction 의 구현하기
 package s2.adapi.ad.service.adext;
 
 import java.io.IOException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import s2.adapi.framework.web.action.WebActionForward;
 import s2.adapi.framework.web.action.WebMultiAction;
@@ -2832,8 +2832,8 @@ public interface ExternalEventWebAction extends WebMultiAction {
 ```java
 package s2.adapi.ad.service.adext;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import s2.adapi.framework.web.action.RestfulMultiWebAction;
 import s2.adapi.framework.web.action.WebActionForward;

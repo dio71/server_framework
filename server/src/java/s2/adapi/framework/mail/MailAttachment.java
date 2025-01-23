@@ -7,7 +7,7 @@ package s2.adapi.framework.mail;
 import java.io.UnsupportedEncodingException;
 import java.net.URL;
 
-import javax.mail.internet.MimeUtility;
+import jakarta.mail.internet.MimeUtility;
 
 import org.apache.commons.mail.EmailAttachment;
 
@@ -40,7 +40,7 @@ public class MailAttachment {
      */
     public MailAttachment() {
         emailAttachment = new EmailAttachment();
-        emailAttachment.setDisposition(javax.mail.Part.ATTACHMENT);
+        emailAttachment.setDisposition(jakarta.mail.Part.ATTACHMENT);
     }
 
     /**
@@ -54,7 +54,7 @@ public class MailAttachment {
      */
     public MailAttachment(String path, String name) throws ApplicationException {
         emailAttachment = new EmailAttachment();
-        emailAttachment.setDisposition(javax.mail.Part.ATTACHMENT);
+        emailAttachment.setDisposition(jakarta.mail.Part.ATTACHMENT);
 
         this.setPath(path);
         this.setName(name);
@@ -159,7 +159,7 @@ public class MailAttachment {
     /**
      * <p>
      * 개체의 disposition을 설정한다.<br>
-     * 기본값은 javax.mail.Part.ATTACHMENT 이다 <br>
+     * 기본값은 jakarta.mail.Part.ATTACHMENT 이다 <br>
      * </p>
      *
      * @param disposition <code>String</code> 원하는 disposition
@@ -171,7 +171,7 @@ public class MailAttachment {
     /**
      * <p>
      * 설정된 disposition 값을 얻어온다.<br>
-     * 기본값은 javax.mail.Part.ATTACHMENT 이다 <br>
+     * 기본값은 jakarta.mail.Part.ATTACHMENT 이다 <br>
      * </p>
      *
      * @return <code>String</code> 설정된 disposition

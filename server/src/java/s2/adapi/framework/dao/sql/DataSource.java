@@ -45,7 +45,7 @@ public class DataSource implements javax.sql.DataSource {
 	}
 	
 	//
-	// javax.sql.DataSource 의 implementation이다.
+	// jakarta.sql.DataSource 의 implementation이다.
 	// 내부 Datasource 객체의 각 해당 메소드를 다시 호출해준다.
 	//
 	public Connection getConnection() throws SQLException {

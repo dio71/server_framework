@@ -3,37 +3,35 @@ package s2.adapi.framework.web.upload;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.security.Principal;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
-import javax.servlet.AsyncContext;
-import javax.servlet.DispatcherType;
-import javax.servlet.RequestDispatcher;
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.ServletInputStream;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
-import javax.servlet.http.HttpUpgradeHandler;
-import javax.servlet.http.Part;
+import jakarta.servlet.AsyncContext;
+import jakarta.servlet.DispatcherType;
+import jakarta.servlet.RequestDispatcher;
+import jakarta.servlet.ServletConnection;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletInputStream;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
+import jakarta.servlet.http.HttpUpgradeHandler;
+import jakarta.servlet.http.Part;
 
-import org.apache.commons.fileupload.FileItem;
-import org.apache.commons.fileupload.FileUploadException;
-import org.apache.commons.fileupload.FileUploadBase.SizeLimitExceededException;
-import org.apache.commons.fileupload.disk.DiskFileItemFactory;
-import org.apache.commons.fileupload.servlet.ServletFileUpload;
+import org.apache.commons.fileupload2.jakarta.servlet6.JakartaServletFileUpload;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -318,14 +316,6 @@ public class MultipartRequestWrapper implements HttpServletRequest {
 		return request.getReader();
 	}
 
-	/**
-	 * @deprecated
-	 */
-	@Deprecated
-	public String getRealPath(String path) {
-		return request.getRealPath(path);
-	}
-
 	public String getRemoteAddr() {
 		return request.getRemoteAddr();
 	}
@@ -402,14 +392,14 @@ public class MultipartRequestWrapper implements HttpServletRequest {
     /**
      * <p>
      * multipart내의 form field와 form file 들을 파싱하여 form field는 setParameter()로 저장하고
-     * form file은 <code>FileItem[]</code> 형태로 files Map 객체에 저장한다.
+     * form file은 <code>FormFile[]</code> 형태로 files Map 객체에 저장한다.
      * upload 가능한 최대 파일크기는 sizeLimit 파라메터로 지정한다. 
      * 파일 업로드시 임시 디렉토리는 "java.io.tmpdir" 시스템 프로퍼티 값을 사용한다.
      * </p>
      * @param sizeLimit 업로드 가능한 파일의 최대 크기(bytes)
      * @return multipart의 파싱이 완료된 MultipartRequestWrapper 자기 자신
      */
-    public MultipartRequestWrapper parseMultipart(long sizeLimit) 
+    public MultipartRequestWrapper parseMultipart(int sizeLimit) 
     		throws ServletException 
     {
     	return parseMultipart((ServletContext)null, sizeLimit);
@@ -422,19 +412,19 @@ public class MultipartRequestWrapper implements HttpServletRequest {
      * upload 가능한 최대 파일크기는 sizeLimit 파라메터로 지정한다. 
      * </p>
      * <p>
-     * 파일 업로드시 임시 디렉토리는 ServetContext의 "javax.servlet.context.tempdir" 속성값을 사용한다.
+     * 파일 업로드시 임시 디렉토리는 ServetContext의 "jakarta.servlet.context.tempdir" 속성값을 사용한다.
      * 주어진 ServetContext 객체가 null 인 경우에는 "java.io.tmpdir" 시스템 프로퍼티 값을 사용한다.
      * </p>
      * @param ServletContext 임시 디렉토리 정보를 얻기 위한 파라메터
      * @param sizeLimit 업로드 가능한 파일의 최대 크기(bytes)
      * @return multipart의 파싱이 완료된 MultipartRequestWrapper 자기 자신
      */
-    public MultipartRequestWrapper parseMultipart(ServletContext ctx, long sizeLimit) 
+    public MultipartRequestWrapper parseMultipart(ServletContext ctx, int sizeLimit) 
     		throws ServletException 
     {
     	String tempDir = null;
     	if ( ctx != null ) {
-    		File tempDirFile = (File)ctx.getAttribute("javax.servlet.context.tempdir");
+    		File tempDirFile = (File)ctx.getAttribute("jakarta.servlet.context.tempdir");
     		tempDir = tempDirFile.getAbsolutePath();
     	} else {
     		tempDir = System.getProperty("java.io.tmpdir");
@@ -455,44 +445,31 @@ public class MultipartRequestWrapper implements HttpServletRequest {
      * @param sizeLimit 업로드 가능한 파일의 최대 크기(bytes)
      * @return multipart의 파싱이 완료된 MultipartRequestWrapper 자기 자신
      */
-    public MultipartRequestWrapper parseMultipart(String tempDir, long sizeLimit) 
+    public MultipartRequestWrapper parseMultipart(String tempDir, int sizeLimit) 
     		throws ServletException 
     {
     	
-    	try {
-    		DiskFileItemFactory factory = new DiskFileItemFactory();
-    		factory.setRepository(new File(tempDir));
-    		factory.setSizeThreshold(10*1024*1024); // 10MB
-    		
-    		ServletFileUpload upload = new ServletFileUpload(factory);
-    		upload.setSizeMax(sizeLimit);
-    		List<?> items = upload.parseRequest(request);
-    		
-    		for(int i=0;i<items.size();i++) {
-    			FileItem item = (FileItem)items.get(i);
-    			if ( item.isFormField() ) {
-    				addParameter(item);
-    			} else {
-    				addFile(item);
-    			}
-    		}
+		@SuppressWarnings("rawtypes")
+		JakartaServletFileUpload upload = new JakartaServletFileUpload<>();
 
-    	} catch (SizeLimitExceededException e) {
-    		if ( log.isErrorEnabled() ) {
-    			log.error("file size exceeded.",e);
+		try {
+			upload.getItemIterator(request).forEachRemaining(item -> {
+				String name = item.getFieldName();
+				InputStream stream = item.getInputStream();
+				if (item.isFormField()) {
+					setParameter(name, new String(stream.readAllBytes(), characterEncoding));
+				}
+				else {
+					addFile(new FormFile(item, sizeLimit));
+				}
+			});
+		}
+		catch(Exception ex) {
+			if ( log.isErrorEnabled() ) {
+    			log.error("file upload exception.",ex);
     		}
-    		throw new ServletException("첨부된 파일이 최대 사이즈("+sizeLimit+")를 초과했습니다.",e);
-    	} catch (FileUploadException e) {
-    		if ( log.isErrorEnabled() ) {
-    			log.error("file upload exception.",e);
-    		}
-    		throw new ServletException("첨부된 파일 처리 중 오류가 발생했습니다.",e);
-    	} catch (Exception e) {
-    		if ( log.isErrorEnabled() ) {
-    			log.error("fail to parse multipart request.",e);
-    		}
-    		throw new ServletException("첨부된 파일 처리 중 오류가 발생했습니다.",e);
-    	}
+    		throw new ServletException("첨부된 파일 처리 중 오류가 발생했습니다.",ex);
+		}
     	
     	return this;
     }
@@ -523,20 +500,7 @@ public class MultipartRequestWrapper implements HttpServletRequest {
     	return fileMap;
     }
     
-    private void addParameter(FileItem item) {
-    	String name = item.getFieldName();
-    	String value = null;
-		try {
-			value = item.getString(characterEncoding);
-		} catch (UnsupportedEncodingException e) {
-			value = item.getString();
-		}
-    	
-    	setParameter(name, value);
-    }
-    
-    private void addFile(FileItem item) {
-    	FormFile formFile = new FormFile(item);
+    private void addFile(FormFile formFile) {
     	String name = formFile.getFieldName();
     	
     	FormFile[] prevFiles = files.get(name);
@@ -618,20 +582,32 @@ public class MultipartRequestWrapper implements HttpServletRequest {
 
 	@Override
 	public long getContentLengthLong() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("Unimplemented method 'getContentLengthLong'");
+		return request.getContentLengthLong();
 	}
 
 	@Override
 	public String changeSessionId() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("Unimplemented method 'changeSessionId'");
+		return request.changeSessionId();
 	}
 
 	@Override
 	public <T extends HttpUpgradeHandler> T upgrade(Class<T> handlerClass) throws IOException, ServletException {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("Unimplemented method 'upgrade'");
+		return request.upgrade(handlerClass);
+	}
+
+	@Override
+	public String getRequestId() {
+		return request.getRequestId();
+	}
+
+	@Override
+	public String getProtocolRequestId() {
+		return request.getProtocolRequestId();
+	}
+
+	@Override
+	public ServletConnection getServletConnection() {
+		return request.getServletConnection();
 	}
     
 }

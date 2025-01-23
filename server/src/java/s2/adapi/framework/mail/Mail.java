@@ -7,8 +7,8 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
-import javax.mail.internet.AddressException;
-import javax.mail.internet.InternetAddress;
+import jakarta.mail.internet.AddressException;
+import jakarta.mail.internet.InternetAddress;
 
 import org.apache.commons.mail.ByteArrayDataSource;
 import org.apache.commons.mail.EmailException;
@@ -196,7 +196,7 @@ public class Mail {
     /**
      * <p/>
      * 받는 사람의 메일 주소 리스트를 설정한다.<br>
-     * {@link java.util.Collection } 타입으로 메일주소 리스트를 설정하면 내부에서 {@link javax.mail.internet.InternetAddress } 형태로 변환해서 처리한다.
+     * {@link java.util.Collection } 타입으로 메일주소 리스트를 설정하면 내부에서 {@link jakarta.mail.internet.InternetAddress } 형태로 변환해서 처리한다.
      * </p>
      *
      * @param toList {@link java.util.Collection } 받는 이의 이메일 주소 리스트
@@ -229,7 +229,7 @@ public class Mail {
     /**
      * <p/>
      * 받는 사람의 이메일 주소와 이름을 가지는 {@link s2.adapi.framework.vo.ValueObject} 로 메일 주소를 설정한다.<br>
-     * {@link java.util.Collection } 타입으로 메일주소 리스트를 설정하면 내부에서 {@link javax.mail.internet.InternetAddress } 형태로 변환해서 처리한다.
+     * {@link java.util.Collection } 타입으로 메일주소 리스트를 설정하면 내부에서 {@link jakarta.mail.internet.InternetAddress } 형태로 변환해서 처리한다.
      * 이 때, <code>ValueObjce</code>의 key는 받는 사람의 이메일주소이며 value는 받는 사람의 이름이다.<br>
      * 예) ValueObject toList = new ValueObject();<br>
      * toList.set("amugae1@mailserver.com", "아무개1");<br>
@@ -361,7 +361,7 @@ public class Mail {
     /**
      * <p/>
      * 참조 이메일 주소 리스트를 설정한다.<br>
-     * {@link java.util.Collection } 타입으로 메일주소 리스트를 설정하면 내부에서 {@link javax.mail.internet.InternetAddress } 형태로 변환해서 처리한다.
+     * {@link java.util.Collection } 타입으로 메일주소 리스트를 설정하면 내부에서 {@link jakarta.mail.internet.InternetAddress } 형태로 변환해서 처리한다.
      * </p>
      *
      * @param ccList {@link java.util.Collection } 참조 이메일 주소 리스트
@@ -394,7 +394,7 @@ public class Mail {
     /**
      * <p/>
      * 참조 이메일 주소와 참조 대상의 이름을 가지는 {@link s2.adapi.framework.vo.ValueObject} 로 메일 주소를 설정한다.<br>
-     * {@link java.util.Collection } 타입으로 메일주소 리스트를 설정하면 내부에서 {@link javax.mail.internet.InternetAddress } 형태로 변환해서 처리한다.
+     * {@link java.util.Collection } 타입으로 메일주소 리스트를 설정하면 내부에서 {@link jakarta.mail.internet.InternetAddress } 형태로 변환해서 처리한다.
      * 이 때, <code>ValueObjce</code>의 key는 참조대상의 이메일주소이며 value는 참조대상의 이름이다.<br>
      * 예) ValueObject ccList = new ValueObject();<br>
      * ccList.set("amugae1@mailserver.com", "참조1");<br>
@@ -526,7 +526,7 @@ public class Mail {
     /**
      * <p/>
      * 숨은 참조 이메일 주소 리스트를 셋팅한다.<br>
-     * {@link java.util.Collection } 타입으로 메일주소 리스트를 설정하면 내부에서 {@link javax.mail.internet.InternetAddress } 형태로 변환해서 처리한다.<br>
+     * {@link java.util.Collection } 타입으로 메일주소 리스트를 설정하면 내부에서 {@link jakarta.mail.internet.InternetAddress } 형태로 변환해서 처리한다.<br>
      * </p>
      *
      * @param bccList {@link java.util.Collection } 숨은 참조 대상의 이메일 리스트
@@ -559,7 +559,7 @@ public class Mail {
     /**
      * <p/>
      * 숨은 참조 이메일 주소와 숨은 참조 대상의 이름을 가지는 {@link s2.adapi.framework.vo.ValueObject} 로 메일 주소를 설정한다.<br>
-     * {@link java.util.Collection } 타입으로 메일주소 리스트를 설정하면 내부에서 {@link javax.mail.internet.InternetAddress } 형태로 변환해서 처리한다.
+     * {@link java.util.Collection } 타입으로 메일주소 리스트를 설정하면 내부에서 {@link jakarta.mail.internet.InternetAddress } 형태로 변환해서 처리한다.
      * 이 때, <code>ValueObjce</code>의 key는 숨은 참조대상의 이메일주소이며 value는 참조대상의 이름이다.<br>
      * 예) ValueObject bccList = new ValueObject();<br>
      * bccList.set("amugae1@mailserver.com", "참조1");<br>
@@ -609,7 +609,7 @@ public class Mail {
      * @return {@link s2.adapi.framework.mail.Mail }
      *
      * @throws ApplicationException 메일 본문형식이 옳지 않을 경우 발생<br>
-     *                       참고 : {@link javax.mail.internet.MimeBodyPart}
+     *                       참고 : {@link jakarta.mail.internet.MimeBodyPart}
      */
     public Mail setMsg(String msg) throws ApplicationException {
         try {
@@ -631,7 +631,7 @@ public class Mail {
      * @return {@link s2.adapi.framework.mail.Mail }
      *
      * @throws ApplicationException 메일 본문형식이 옳지 않을 경우 발생<br>
-     *                       참고 : {@link javax.mail.internet.MimeBodyPart}
+     *                       참고 : {@link jakarta.mail.internet.MimeBodyPart}
      */
     public Mail setHtmlMsg(String msg) throws ApplicationException {
         try {
@@ -655,7 +655,7 @@ public class Mail {
      * @return {@link s2.adapi.framework.mail.Mail}
      *
      * @throws ApplicationException 메일 본문형식이 옳지 않을 경우 발생<br>
-     *                       참고 : {@link javax.mail.internet.MimeBodyPart}
+     *                       참고 : {@link jakarta.mail.internet.MimeBodyPart}
      */
     public Mail setContext(String subject, String msg) throws ApplicationException {
         this.setSubject(subject);
@@ -670,7 +670,7 @@ public class Mail {
      * </p>
      *
      * @throws ApplicationException 메일 전송중에 오류발생 시
-     * @see javax.mail.MessagingException
+     * @see jakarta.mail.MessagingException
      */
     public void send() throws ApplicationException {
         try {
@@ -751,7 +751,7 @@ public class Mail {
         try {
         	ByteArrayDataSource ds = new ByteArrayDataSource(attach,contentType);
         	
-            htmlEmail.attach(ds,name,"",javax.mail.Part.ATTACHMENT);
+            htmlEmail.attach(ds,name,"",jakarta.mail.Part.ATTACHMENT);
         } 
         catch(IOException ioex) {
         	throw new ApplicationException("service.error.10006", ioex);

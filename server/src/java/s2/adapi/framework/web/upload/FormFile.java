@@ -1,18 +1,23 @@
 package s2.adapi.framework.web.upload;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
 
-import org.apache.commons.fileupload.FileItem;
+import org.apache.commons.fileupload2.core.FileItemInput;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+// 2025.01.23
+// Java EE -> Jakarta EE 로 migration 하기 위하여 commons fileupload -> fileupload2 로 재구현함
+// 구현 방식이 바뀌어 대부분 수정함
 public class FormFile {
     protected static Logger log = LoggerFactory.getLogger(FormFile.class);
 
-    private FileItem fileItem;
+    private String fieldName = null;
+    private String contentType = null;
+    private String fileName = null;
+    private byte[] fileData = null;
 
     /**
      * <p>
@@ -22,9 +27,12 @@ public class FormFile {
      * @param fileItem 파일 업로드 리퀘스트로부터 얻어지는 FileItem 객체
      * @param key FileItem 객체에 대한 키 값
      */
-    public FormFile(FileItem fileItem)
+    public FormFile(FileItemInput fileItem, int sizeLimit) throws IOException
     {
-        this.fileItem = fileItem;
+        this.fieldName = fileItem.getFieldName();
+        this.contentType = fileItem.getContentType();
+        this.fileName = fileItem.getName();
+        this.fileData = fileItem.getInputStream().readNBytes(sizeLimit);
     }
 
     /**
@@ -35,7 +43,7 @@ public class FormFile {
      * @return 업로드 파일의 컨텐트 타입에 대한 문자열
      */
     public String getContentType() {
-        return fileItem.getContentType();
+        return contentType;
     }
 
     /**
@@ -46,7 +54,7 @@ public class FormFile {
      * @return 파일 사이즈
      */
     public int getFileSize() {
-        return (int) fileItem.getSize();
+        return fileData.length;
     }
 
     /**
@@ -56,7 +64,7 @@ public class FormFile {
      * @return  파일명
      */
     public String getFileName() {
-        return getBaseFileName(fileItem.getName());
+        return getBaseFileName(fileName);
     }
 
     /**
@@ -65,35 +73,9 @@ public class FormFile {
      * </p>
      *
      * @return 파일의 내용(byte[])
-     * @throws FileNotFoundException 해당 파일을 찾지 못하는 경우
-     * @throws IOException 해당 파일로 부터 내용을 읽지 못하는 경우
      */
-    public byte[] getFileData()
-            throws FileNotFoundException, IOException {
-        return fileItem.get();
-    }
-
-    /**
-     * <p>
-     * 파일의 내용을 InputStream 형태로 리턴한다.
-     * </p>
-     *
-     * @return 파일의 내용(InputStream)
-     * @throws FileNotFoundException 해당 파일을 찾지 못하는 경우
-     * @throws IOException 해당 파일로 부터 내용을 읽지 못하는 경우
-     */
-    public InputStream getInputStream()
-            throws FileNotFoundException, IOException {
-        return fileItem.getInputStream();
-    }
-
-    /**
-     * <p>
-     * 파일을 삭제한다.
-     * </p>
-     */
-    public void destroy() {
-        fileItem.delete();
+    public byte[] getFileData() {
+        return fileData;
     }
 
     /**
@@ -103,7 +85,7 @@ public class FormFile {
      * @return 업로드 파일에 대한 키
      */
     public String getFieldName(){
-        return fileItem.getFieldName();
+        return fieldName;
     }
 
     /**
@@ -115,16 +97,7 @@ public class FormFile {
      */
     public String toString()
     {
-        return fileItem.getName();
-    }
-    
-    /**
-     * 지정한 파일객체로 파일 내용을 저장한다.
-     * @param file
-     * @throws Exception
-     */
-    public void write(File file) throws Exception {
-    	fileItem.write(file);
+        return fieldName + "," + fileName + "," + contentType + "," + fileData.length;
     }
     
     /**
@@ -134,7 +107,7 @@ public class FormFile {
      * @param filePath  파일의 전체 경로명
      * @return 경로명을 제외한 파일명
      */
-    protected String getBaseFileName(String filePath) {
+    private String getBaseFileName(String filePath) {
     	// TODO 구현 개선하자.
         String fileName = (new File(filePath)).getName();
         int colonIndex = fileName.indexOf(":");
@@ -147,4 +120,6 @@ public class FormFile {
         }
         return fileName;
     }
+
+    
 }

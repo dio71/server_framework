@@ -2,9 +2,9 @@ package s2.adapi.framework.web.action;
 
 import java.io.IOException;
 
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 /**
  * WebActionDispatcher에서 WebAction 처리 중 Exception이 발생했을 경우

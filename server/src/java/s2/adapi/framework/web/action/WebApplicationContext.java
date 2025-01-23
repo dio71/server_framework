@@ -1,6 +1,6 @@
 package s2.adapi.framework.web.action;
 
-import javax.servlet.ServletContext;
+import jakarta.servlet.ServletContext;
 
 import s2.adapi.framework.container.ServiceContainer;
 import s2.adapi.framework.context.ApplicationContext;
