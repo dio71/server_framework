@@ -1,0 +1,23 @@
+plugins {
+  id 'project.java-common'
+}
+
+task copyFiles(type: Copy) {
+    dependsOn classes
+
+    from 'src/java'
+    into 'build/classes/java/main'
+    include '**/*.dtd'
+}
+
+jar {
+    dependsOn copyFiles
+
+    archiveFileName = "${projectDir.name}-${version}.jar"
+    destinationDirectory = file("${buildDir}")
+}
+
+compileJava {
+    options.encoding = "UTF-8"
+}
+

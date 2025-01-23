@@ -1,0 +1,46 @@
+
+<!ELEMENT services (service+)>
+<!ATTLIST services
+    module          CDATA   #IMPLIED
+    package         CDATA   #IMPLIED
+    resource        CDATA   #IMPLIED
+    pre-init   (true|false) "false"
+>
+
+<!ELEMENT service ((constructor|factory)?,property*)>
+<!ATTLIST service
+    name            CDATA   #REQUIRED
+    interface       CDATA   #IMPLIED
+    class           CDATA   #IMPLIED
+    interceptor     CDATA   #IMPLIED
+    init-method     CDATA   #IMPLIED
+    destroy-method  CDATA  #IMPLIED
+    singleton   (true|false) "true"
+    pre-init    (true|false) #IMPLIED
+    activate    (true|false) "true"
+    load-priority	CDATA	"0"
+>
+
+<!ELEMENT factory (arg*)>
+
+<!ATTLIST factory
+    class       CDATA   #IMPLIED
+    ref			CDATA   #IMPLIED
+    method      CDATA   #REQUIRED
+>
+
+<!ELEMENT constructor (arg*)>
+
+<!ELEMENT arg EMPTY>
+<!ATTLIST arg
+    type        CDATA   #REQUIRED
+    value       CDATA   #IMPLIED
+    ref         CDATA   #IMPLIED
+>   
+
+<!ELEMENT property EMPTY>
+<!ATTLIST property
+    name        CDATA   #REQUIRED
+    value       CDATA   #IMPLIED
+    ref         CDATA   #IMPLIED
+>
