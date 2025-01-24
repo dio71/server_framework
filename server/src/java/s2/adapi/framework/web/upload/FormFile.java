@@ -108,7 +108,7 @@ public class FormFile {
      */
     private String getBaseFileName(String filePath) {
 
-        String[] split = filePath.split("\\");
+        String[] split = filePath.split("/");
         return split[split.length-1];
 
         // String fileName = (new File(filePath)).getName();
