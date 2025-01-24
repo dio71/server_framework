@@ -5,12 +5,9 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
-import org.apache.log4j.PropertyConfigurator;
-
 import s2.adapi.framework.Constants;
 import s2.adapi.framework.config.impl.PropertiesConfiguratorImpl;
 import s2.adapi.framework.util.ObjectHelper;
-import s2.adapi.framework.util.StringHelper;
 import s2.adapi.framework.util.SystemHelper;
 
 /**
@@ -146,14 +143,16 @@ public class ConfiguratorFactory {
         File configFile = null;
         try {
         	configFile = SystemHelper.getResourceAsFile(configFileName);
-        } catch (IOException ignored) {
+        } 
+        catch (IOException ignored) {
         }
 
         if (configFile == null) {
         	try {
         		configFileName = S2API_CONFIGURATION_PROPERTIES_FILE_PATH_VALUE + configFileName;
         		configFile = SystemHelper.getResourceAsFile(configFileName);
-			} catch (IOException e) {
+			} 
+            catch (IOException e) {
 				throw new ConfiguratorException("Configuration file not found. (neither " 
 						+ firstConfigFileName + " and " + configFileName+")",e);
 			}
@@ -195,24 +194,26 @@ public class ConfiguratorFactory {
         	if ( is != null ) {
         		try {
 					is.close();
-				} catch (IOException e) {
+				} 
+                catch (IOException e) {
 				}
         	}
         }
         
-        //
-        // framework-config.properties 파일에 "s2adapi.log4j.config" 항목이 있을 경우에는 log4j를 재설정한다.
-        //
-        String log4jConfig = configurator.getString("s2adapi.log4j.config","");
-        if ( !StringHelper.isNull(log4jConfig) ) {
-        	try {
-				File log4jConfigFile = SystemHelper.getResourceAsFile(log4jConfig);
-				if ( log4jConfigFile != null ) {
-					PropertyConfigurator.configure(log4jConfigFile.getPath());
-				}
-			} catch (IOException ignored) {}
+        // log4j -> log4j2 로 변경하면서 아래 기능은 삭제함 (2025.01.24)
+        // //
+        // // framework-config.properties 파일에 "s2adapi.log4j.config" 항목이 있을 경우에는 log4j를 재설정한다.
+        // //
+        // String log4jConfig = configurator.getString("s2adapi.log4j.config","");
+        // if ( !StringHelper.isNull(log4jConfig) ) {
+        // 	try {
+		// 		File log4jConfigFile = SystemHelper.getResourceAsFile(log4jConfig);
+		// 		if ( log4jConfigFile != null ) {
+		// 			PropertyConfigurator.configure(log4jConfigFile.getPath());
+		// 		}
+		// 	} catch (IOException ignored) {}
         	
-        }
+        // }
 
 		return configurator;
     }

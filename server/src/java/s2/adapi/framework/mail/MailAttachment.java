@@ -9,7 +9,7 @@ import java.net.URL;
 
 import jakarta.mail.internet.MimeUtility;
 
-import org.apache.commons.mail.EmailAttachment;
+import org.apache.commons.mail2.jakarta.EmailAttachment;
 
 import s2.adapi.framework.exception.ApplicationException;
 
@@ -23,15 +23,10 @@ import s2.adapi.framework.exception.ApplicationException;
  */
 
 public class MailAttachment {
-    private static final String DEFAULT_CHARSET = "EUC-KR";
+    private static final String DEFAULT_CHARSET = "UTF-8";
 
     private EmailAttachment emailAttachment = null;
     private String mailCharset = DEFAULT_CHARSET;
-
-    /**
-     * //TODO : description이 반영되는 메일서버 종류?
-     */
-    //private String m_description = null;
 
     /**
      * <p>

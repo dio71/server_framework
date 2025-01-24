@@ -112,10 +112,7 @@ public abstract class AbstractWebAction implements WebAction {
 					fileVO.set(i, "type", files[i].getContentType());
 					fileVO.set(i, "name", files[i].getFileName());
 					fileVO.set(i, "size", files[i].getFileSize());
-					try {
-						fileVO.set("data", files[i].getFileData());
-					} catch (IOException e) {
-					}
+					fileVO.set("data", files[i].getFileData());
 				}
 			}
 		}

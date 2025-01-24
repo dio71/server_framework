@@ -21,26 +21,26 @@ import s2.adapi.framework.util.StringHelper;
  */
 public class EncryptedDataSourceFactoryV2 extends BasicDataSourceFactory {
 
-	@Override
-	public Object getObjectInstance(Object object, Name name, Context ctx, Hashtable<?, ?> environment) throws Exception {
-		Object obj = super.getObjectInstance(object, name, ctx, environment);
+	// @Override
+	// public Object getObjectInstance(Object object, Name name, Context ctx, Hashtable<?, ?> environment) throws Exception {
+	// 	Object obj = super.getObjectInstance(object, name, ctx, environment);
 		
-		if (obj == null) {
-			return null;
-		}
+	// 	if (obj == null) {
+	// 		return null;
+	// 	}
 			
-        BasicDataSource ds = (BasicDataSource) obj;
+    //     BasicDataSource ds = (BasicDataSource) obj;
         
-        String userName = ds.getUsername();
-        String password = ds.getPassword();
+    //     String userName = ds.getUsername();
+    //     String password = ds.getPassword();
         
-        if (!StringHelper.allEmpty(userName, password)) {
-			ds.setUsername(HexEncoder.decryptAES(ds.getUsername()));
-			ds.setPassword(HexEncoder.decryptAES(ds.getPassword()));
+    //     if (!StringHelper.allEmpty(userName, password)) {
+	// 		ds.setUsername(HexEncoder.decryptAES(ds.getUsername()));
+	// 		ds.setPassword(HexEncoder.decryptAES(ds.getPassword()));
 			
-			return ds;
-        }
+	// 		return ds;
+    //     }
 	        
-		return null;
-	}
+	// 	return null;
+	// }
 }

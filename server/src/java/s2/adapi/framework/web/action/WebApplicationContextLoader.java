@@ -4,7 +4,7 @@ import jakarta.servlet.ServletContext;
 import jakarta.servlet.ServletContextEvent;
 import jakarta.servlet.ServletContextListener;
 
-import org.apache.log4j.LogManager;
+import org.apache.logging.log4j.LogManager;
 
 import s2.adapi.framework.Constants;
 import s2.adapi.framework.config.ConfiguratorException;

@@ -119,7 +119,8 @@ public class ServiceWebAction extends AbstractWebAction {
 				svcInfoVOs.set("ops", getServiceOperations(className));
 			}
 			
-		} catch(Exception ex) {
+		} 
+		catch(Exception ex) {
 			ex.printStackTrace();
 		}
 		
@@ -135,8 +136,8 @@ public class ServiceWebAction extends AbstractWebAction {
 			for(int i=0;i<methods.length;i++) {
 				opVO.set(i,"op", methods[i].toString());
 			}
-		} catch (ClassNotFoundException e) {
-			// TODO Auto-generated catch block
+		} 
+		catch (ClassNotFoundException e) {
 			e.printStackTrace();
 		}
 		

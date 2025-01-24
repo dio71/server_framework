@@ -1,6 +1,5 @@
 package s2.adapi.framework.web.upload;
 
-import java.io.File;
 import java.io.IOException;
 
 import org.apache.commons.fileupload2.core.FileItemInput;
@@ -108,17 +107,20 @@ public class FormFile {
      * @return 경로명을 제외한 파일명
      */
     private String getBaseFileName(String filePath) {
-    	// TODO 구현 개선하자.
-        String fileName = (new File(filePath)).getName();
-        int colonIndex = fileName.indexOf(":");
-        if (colonIndex == -1) {
-            colonIndex = fileName.indexOf("\\\\");
-        }
-        int backslashIndex = fileName.lastIndexOf("\\");
-        if (colonIndex > -1 && backslashIndex > -1) {
-            fileName = fileName.substring(backslashIndex + 1);
-        }
-        return fileName;
+
+        String[] split = filePath.split("\\");
+        return split[split.length-1];
+
+        // String fileName = (new File(filePath)).getName();
+        // int colonIndex = fileName.indexOf(":");
+        // if (colonIndex == -1) {
+        //     colonIndex = fileName.indexOf("\\\\");
+        // }
+        // int backslashIndex = fileName.lastIndexOf("\\");
+        // if (colonIndex > -1 && backslashIndex > -1) {
+        //     fileName = fileName.substring(backslashIndex + 1);
+        // }
+        // return fileName;
     }
 
     

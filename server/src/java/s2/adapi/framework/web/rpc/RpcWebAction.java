@@ -18,9 +18,10 @@ import javax.crypto.spec.SecretKeySpec;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-import org.apache.log4j.MDC;
+//import org.apache.logging.log4j.MDC;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
 import s2.adapi.framework.context.ContextManager;
 import s2.adapi.framework.context.ServiceContext;

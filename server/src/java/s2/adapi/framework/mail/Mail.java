@@ -1,6 +1,5 @@
 package s2.adapi.framework.mail;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -9,10 +8,10 @@ import java.util.List;
 
 import jakarta.mail.internet.AddressException;
 import jakarta.mail.internet.InternetAddress;
+import jakarta.mail.util.ByteArrayDataSource;
 
-import org.apache.commons.mail.ByteArrayDataSource;
-import org.apache.commons.mail.EmailException;
-import org.apache.commons.mail.HtmlEmail;
+import org.apache.commons.mail2.core.EmailException;
+import org.apache.commons.mail2.jakarta.HtmlEmail;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -752,9 +751,6 @@ public class Mail {
         	ByteArrayDataSource ds = new ByteArrayDataSource(attach,contentType);
         	
             htmlEmail.attach(ds,name,"",jakarta.mail.Part.ATTACHMENT);
-        } 
-        catch(IOException ioex) {
-        	throw new ApplicationException("service.error.10006", ioex);
         } 
         catch (EmailException ee) {
             throw new ApplicationException("service.error.10006", ee);
