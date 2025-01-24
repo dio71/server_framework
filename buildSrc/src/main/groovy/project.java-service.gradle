@@ -13,8 +13,8 @@ task copyFiles(type: Copy) {
 jar {
     dependsOn copyFiles
 
-    archiveFileName = "${projectDir.name}-${version}.jar"
-    destinationDirectory = file("${buildDir}")
+    archiveFileName = "s2api-${version}.jar"
+    destinationDirectory = file("${buildDir}/../../download")
 }
 
 compileJava {
