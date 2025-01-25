@@ -36,7 +36,7 @@ public class FileWatchdog extends Thread {
     /**
      * 감시 쓰레드 명
      */
-    public static final String WATCHDOG_THREAD_NAME = "Live.FileWatchDog";
+    public static final String WATCHDOG_THREAD_NAME = "S2API.FileWatchDog";
     
     /**
      * <p>

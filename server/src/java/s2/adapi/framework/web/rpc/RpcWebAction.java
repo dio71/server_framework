@@ -18,9 +18,9 @@ import javax.crypto.spec.SecretKeySpec;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-import org.apache.logging.log4j.ThreadContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
 import s2.adapi.framework.context.ContextManager;
 import s2.adapi.framework.context.ServiceContext;
@@ -101,11 +101,11 @@ public class RpcWebAction extends AbstractWebAction {
 			long curMillis = System.currentTimeMillis();
 			
 			if (rpcKey != null) {
-				ThreadContext.put("userid", rpcKey); // 
+				MDC.put("userid", rpcKey); // 
 			}
 			
 			if (userName != null) {
-				ThreadContext.put("mduname", userName);
+				MDC.put("mduname", userName);
 			}
 			
 			// verifycheck , timestamp 범위 확인 (1분)

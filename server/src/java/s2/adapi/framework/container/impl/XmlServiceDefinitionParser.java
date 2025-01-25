@@ -153,7 +153,7 @@ public class XmlServiceDefinitionParser extends DefaultHandler {
 	 */
 	public InputSource resolveEntity(String publicId, String systemId) {
 		try {
-			log.info("## resolveEntity : " + publicId);
+			//log.debug("## resolveEntity : " + publicId);
 			return new InputSource(SystemHelper.getResourceAsStream(DTD_RESOURCE));
 		} 
 		catch (Exception e) {
