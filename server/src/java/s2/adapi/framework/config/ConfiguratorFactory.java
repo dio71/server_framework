@@ -113,7 +113,7 @@ public class ConfiguratorFactory {
      */
     public static Configurator getConfigurator() throws ConfiguratorException {
     	if (configuratorSingleton == null) {
-    		configuratorSingleton = getConfiguratorInstance();
+    		configuratorSingleton = newConfiguratorInstance();
     	}
     	
         return configuratorSingleton;
@@ -129,7 +129,7 @@ public class ConfiguratorFactory {
      * @throws ConfiguratorException 구성 파일을 접근 할 수 없는 경우;<br> 구성 파일의 정보를 SystemProperty에서 잘못 지정한 경우;<br>
      *                               해당 구성 파일을 로드 하기 위한 implement Class를 로드 하지 못할 경우
      */
-    public synchronized static Configurator getConfiguratorInstance() throws ConfiguratorException {
+    private synchronized static Configurator newConfiguratorInstance() throws ConfiguratorException {
 
         String configClassInstance = null;
         InputStream is = null;

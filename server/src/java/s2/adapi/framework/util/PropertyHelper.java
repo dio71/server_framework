@@ -13,6 +13,10 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import s2.adapi.framework.config.Configurator;
+import s2.adapi.framework.config.ConfiguratorException;
+import s2.adapi.framework.config.ConfiguratorFactory;
+
 /**
  * <p>
  * Property 관련 Framework의 Helper Class 프로퍼티 Key가 계층적으로 구성되어 있는 프로퍼티 파일 사용을
@@ -90,6 +94,24 @@ public class PropertyHelper {
 	 */
 	private String propertyFilename = null;
 	
+	/**
+	 * config file 에 설정된 Properties 파일 경로를 사용하여 PropertyHelper 객체를 생성한다.
+	 * @param configKey properties 파일 경로를 가져오기 위한 config key 이름
+	 * @return
+	 */
+	public static PropertyHelper getInstanceFromConfig(String configKey) {
+		try {
+			Configurator config = ConfiguratorFactory.getConfigurator();
+			String configValue = config.getString(configKey); // property file path
+
+			return new PropertyHelper(configValue);
+		} 
+		catch (ConfiguratorException e) {
+			log.error("Cannot create Properties from Config : " + configKey, e);
+			return null;
+		}
+	}
+
 	/**
 	 * 프로퍼티 파일명을 인자로 받는다.
 	 */
@@ -348,7 +370,7 @@ public class PropertyHelper {
 		catch (Exception ex) {
 			if (log.isErrorEnabled()) {
 				log.error("Configurator Exception while loading properties : "
-						+ propertyFilename + "(" + propertyFilename+")", ex);
+						+ propertyFilename, ex);
 			}
 		}
 		finally {

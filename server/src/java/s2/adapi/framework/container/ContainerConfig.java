@@ -152,7 +152,8 @@ public class ContainerConfig {
 					svcContainer = (ServiceContainer)ObjectHelper.instantiate(implClass,new Class[]{String.class},new Object[] {cname});
 					log.info("Container '"+cname+"' has been instantiated. ["+implClass+"]");
 					containerCache.put(cname, svcContainer);
-				} catch (Exception ex) {
+				} 
+				catch (Exception ex) {
 					log.error("Cannot instantiate container '"+cname+"'. ["+implClass+"]",ex);
 					ex.printStackTrace();
 				}
