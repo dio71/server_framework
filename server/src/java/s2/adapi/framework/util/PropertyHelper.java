@@ -13,6 +13,7 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import s2.adapi.framework.Constants;
 import s2.adapi.framework.config.Configurator;
 import s2.adapi.framework.config.ConfiguratorException;
 import s2.adapi.framework.config.ConfiguratorFactory;
@@ -102,12 +103,35 @@ public class PropertyHelper {
 	public static PropertyHelper getInstanceFromConfig(String configKey) {
 		try {
 			Configurator config = ConfiguratorFactory.getConfigurator();
-			String configValue = config.getString(configKey); // property file path
+			String configValue = config.getString(Constants.APPLICATION_CONFIG_KEY + configKey); // property file path
 
 			return new PropertyHelper(configValue);
 		} 
 		catch (ConfiguratorException e) {
 			log.error("Cannot create Properties from Config : " + configKey, e);
+			return null;
+		}
+	}
+
+	/**
+	 * 기본 config file 을 읽어서 PropertyHelper 객체를 생성한다.
+	 * @return
+	 */
+	public static PropertyHelper getInstanceFromConfig() {
+		try {
+			Configurator config = ConfiguratorFactory.getConfigurator();
+			String configKey = config.getString(Constants.APPLICATION_CONFIG_DEFAULT_NAME); // property file path
+
+			if (configKey == null) {
+				log.error("Default config key name (" + Constants.APPLICATION_CONFIG_DEFAULT_NAME + ") not given.");
+				return null;
+			}
+
+			String configValue = config.getString(Constants.APPLICATION_CONFIG_KEY + configKey);
+			return new PropertyHelper(configValue);
+		} 
+		catch (ConfiguratorException e) {
+			log.error("Cannot create Properties from default Config.", e);
 			return null;
 		}
 	}

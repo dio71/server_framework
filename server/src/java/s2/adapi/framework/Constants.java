@@ -93,4 +93,10 @@ public class Constants {
      * 
      */
     public static final String CONFIG_SYSTEM_TIMEZONE_KEY = "s2adapi.system.timezone";
+
+    /**
+     * Application 설정 파일 관련 키값
+     */
+    public static final String APPLICATION_CONFIG_KEY = "application.config.";
+    public static final String APPLICATION_CONFIG_DEFAULT_NAME = APPLICATION_CONFIG_KEY + "default.name";
 }
