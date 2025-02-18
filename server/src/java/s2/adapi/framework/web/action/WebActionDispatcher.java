@@ -237,7 +237,8 @@ public class WebActionDispatcher extends HttpServlet {
             // 2024.10.15 euc-kr -> utf-8 로 변경
             defaultCharacterEncoding = configurator.getString(WEB_DEFAULT_ENCODING_KEY,"utf-8");
             defaultUploadEncoding = configurator.getString(WEB_UPLOAD_ENCODING_KEY,"utf-8");
-        } catch (ConfiguratorException e) {
+        } 
+        catch (ConfiguratorException e) {
         }
 
         // default character encoding 값 및 default upload encoding 설정
@@ -280,10 +281,12 @@ public class WebActionDispatcher extends HttpServlet {
             HttpServletResponse response) throws ServletException, IOException {
         try {
             process(request, response);
-        } catch(Exception ex) {
+        } 
+        catch(Exception ex) {
             if (exceptionHandler != null) {
                 exceptionHandler.handle(ex,request,response);
-            } else {
+            } 
+            else {
                 handleException(ex,request,response);
             }
             log.error("",ex);
@@ -294,10 +297,12 @@ public class WebActionDispatcher extends HttpServlet {
             HttpServletResponse response) throws ServletException, IOException {
         try {
             process(request, response);
-        } catch(Exception ex) {
+        } 
+        catch(Exception ex) {
             if (exceptionHandler != null) {
                 exceptionHandler.handle(ex,request,response);
-            } else {
+            } 
+            else {
                 handleException(ex,request,response);
             }
             log.error("",ex);
@@ -317,9 +322,11 @@ public class WebActionDispatcher extends HttpServlet {
             HttpServletResponse response) throws ServletException, IOException {
         if (thr instanceof ServletException) {
             throw (ServletException)thr;
-        } else if (thr instanceof IOException) {
+        } 
+        else if (thr instanceof IOException) {
             throw (IOException)thr;
-        } else {
+        } 
+        else {
             throw new ServletException(thr);
         }
     }
