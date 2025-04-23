@@ -388,7 +388,7 @@ public class WebActionDispatcher extends HttpServlet {
         
         // Diagnostic Context 설정
         diagMap.put("diag.web.action.uri",uriValue);
-        diagMap.put("diag.web.action.target",svcName);
+        //diagMap.put("diag.web.action.target",svcName);  // 아래로 위치 이동
         diagMap.put("diag.web.action.stime",stime);
 
         try {
@@ -420,6 +420,8 @@ public class WebActionDispatcher extends HttpServlet {
                                 getMessage("service.error.09000",uriValue));
                     }
                 }
+
+                diagMap.put("diag.web.action.target",svcName); // 2025.04.23 (restfull api 는 메소드명이 서비스명으로 들어가기때문에 여기로 위치 이동)
 
                 if (svcObject == null) {
                     // service not found
